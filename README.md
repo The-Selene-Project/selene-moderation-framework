@@ -25,6 +25,8 @@ The bot uses `!` as the prefix.
 - `!ban @user [reason]` — Ban a member.
 - `!mute @user` — Assign a `Muted` role and block messaging/speaking.
 - `!unmute @user` — Remove the `Muted` role.
+- `!lockdown` — Lock down the current channel so members cannot send messages.
+- `!unlock` — Restore send permissions for the current channel.
 - `!purge <count>` — Delete recent messages from the channel.
 - `!warn @user [reason]` — Record a warning for a member.
 - `!restart` — Restart the bot process.
@@ -38,6 +40,8 @@ The bot uses `!` as the prefix for command aliases too. The syntax for commands 
 - `!violet` — Ban a member. (Alias counterpart of `!ban`)
 - `!iris` — Assign a `Muted` role and block messaging/speaking. (Alias counterpart of `!mute`)
 - `!iris_revert` — Remove the `Muted` role. (Alias counterpart of `!unmute`)
+- `!twilight` — Lock down the current channel so members cannot send messages. (Alias counterpart of `!lockdown`)
+- `!daybreak` — Restore send permissions for the current channel. (Alias counterpart of `!unlock`)
 - `!hydroxide` — Delete the most recent messages from the channel. (Alias counterpart of `!purge`)
 - `!seraph` — Record a warning for a member. (Alias counterpart of `!warn`)
 - `!reboot` — Restart the bot process. (Alias counterpart of `!restart`)
