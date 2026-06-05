@@ -159,7 +159,7 @@ async function handleKick(message, args) {
 
   const target = getTargetMember(message, args[0]);
   if (!target) return message.reply(formatErrorMessage(ERROR_CODES.MISSING_TARGET_KICK, 'Please mention a user to kick.'));
-  if (!target.kickable) return message.reply(formatErrorMessage(ERROR_CODES.UNABLE_TO_KICK, 'I cannot kick that member.'));
+  if (!target.kickable) return message.reply(formatErrorMessage(ERROR_CODES.UNABLE_TO_KICK, 'User is immune to moderation action "kick": Role hierarchy or permissions rendering moderation actions impossible.'));
 
   const reason = args.slice(1).join(' ') || 'No reason provided';
   await target.kick(reason);
@@ -173,7 +173,7 @@ async function handleBan(message, args) {
 
   const target = getTargetMember(message, args[0]);
   if (!target) return message.reply(formatErrorMessage(ERROR_CODES.MISSING_TARGET_BAN, 'Please mention a user to ban.'));
-  if (!target.bannable) return message.reply(formatErrorMessage(ERROR_CODES.UNABLE_TO_BAN, 'I cannot ban that member.'));
+  if (!target.bannable) return message.reply(formatErrorMessage(ERROR_CODES.UNABLE_TO_BAN, 'User is immune to moderation action "ban": Role hierarchy or permissions rendering moderation actions impossible.'));
 
   const reason = args.slice(1).join(' ') || 'No reason provided';
   await target.ban({ reason });
