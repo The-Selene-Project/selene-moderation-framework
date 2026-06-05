@@ -21,13 +21,13 @@ const ERROR_CODES = {
   MISSING_TARGET_MUTE: 'err_selene_mod_missing_target_mute',
   MISSING_TARGET_UNMUTE: 'err_selene_mod_missing_target_unmute',
   MISSING_TARGET_WARN: 'err_selene_mod_missing_target_warn',
-  UNABLE_TO_KICK: 'err_selene_mod_unable_to_kick',
-  UNABLE_TO_BAN: 'err_selene_mod_unable_to_ban',
+  UNABLE_TO_KICK: 'err_selene_mod_kick_failure',
+  UNABLE_TO_BAN: 'err_selene_mod_ban_failure',
   USER_ALREADY_MUTED: 'err_selene_mod_user_already_muted',
   USER_NOT_MUTED: 'err_selene_mod_user_not_muted',
-  INVALID_PURGE_AMOUNT: 'err_selene_mod_invalid_purge_amount',
-  WARNING_SAVE_FAILED: 'err_selene_mod_warning_save_failed',
-  UNKNOWN_COMMAND: 'err_selene_mod_unknown_command',
+  INVALID_PURGE_AMOUNT: 'err_selene_mod_purge_amount_not_within_redlines',
+  WARNING_SAVE_FAILED: 'err_selene_mod_warning_save_failure',
+  UNKNOWN_COMMAND: 'err_selene_mod_command_unknown',
   ROLE_PERMISSION_UPDATE_WARNING: 'err_selene_mod_role_permission_update_warning'
 };
 
