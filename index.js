@@ -214,4 +214,4 @@ async function handleWarn(message, args) {
   return message.reply(`Warned ${target.user.tag}. Total warnings: ${warnings[userId].length}`);
 }
 
-client.login(MTUwOTg5ODc1MDM5MzU4NTY3NQ.Gu4ZhS.E_4hN-J_4XGsiTRYw6T3DNh3qtOMCeaneZPi_8);
+client.login(TOKEN);
