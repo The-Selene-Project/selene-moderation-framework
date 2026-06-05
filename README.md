@@ -27,6 +27,9 @@ The bot uses `!` as the prefix.
 - `!unmute @user` — Remove the `Muted` role.
 - `!purge <count>` — Delete recent messages from the channel.
 - `!warn @user [reason]` — Record a warning for a member.
+- `!restart` — Restart the bot process.
+- `!enable_verbose_dialogs` — Enable verbose error dialogs.
+- `!disable_verbose_dialogs` — Disable verbose error dialogs.
 
 ## Command Aliases
 The bot uses `!` as the prefix for command aliases too. The syntax for commands executed under aliases remains the same as for the base commands.
@@ -37,6 +40,7 @@ The bot uses `!` as the prefix for command aliases too. The syntax for commands 
 - `!iris_revert` — Remove the `Muted` role. (Alias counterpart of `!unmute`)
 - `!hydroxide` — Delete the most recent messages from the channel. (Alias counterpart of `!purge`)
 - `!seraph` — Record a warning for a member. (Alias counterpart of `!warn`)
+- `!reboot` — Restart the bot process. (Alias counterpart of `!restart`)
 
 **NOTICE:** The Command Aliases feature is known for the bug `selene_moderation_framework_bug_002`. The team is working hard to find a permanent resolution to the issue.
 

@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { spawn } = require('child_process');
 const { Client, GatewayIntentBits, Partials, PermissionsBitField, ChannelType } = require('discord.js');
 require('dotenv').config();
 
@@ -14,7 +15,8 @@ const COMMAND_ALIASES = {
   iris: 'mute',
   iris_revert: 'unmute',
   hydroxide: 'purge',
-  seraph: 'warn'
+  seraph: 'warn',
+  reboot: 'restart'
 };
 
 const ERROR_CODES = {
@@ -26,6 +28,9 @@ const ERROR_CODES = {
   NO_PERMISSION_UNMUTE: 'err_selene_mod_no_permission_unmute',
   NO_PERMISSION_PURGE: 'err_selene_mod_no_permission_purge',
   NO_PERMISSION_WARN: 'err_selene_mod_no_permission_warn',
+  NO_PERMISSION_RESTART: 'err_selene_mod_no_permission_restart',
+  NO_PERMISSION_VERBOSE_DIALOGS: 'err_selene_mod_no_permission_verbose_dialogs',
+  INTERNAL_ERROR: 'err_selene_mod_internal_error',
   MISSING_TARGET_KICK: 'err_selene_mod_missing_target_kick',
   MISSING_TARGET_BAN: 'err_selene_mod_missing_target_ban',
   MISSING_TARGET_MUTE: 'err_selene_mod_missing_target_mute',
@@ -41,8 +46,15 @@ const ERROR_CODES = {
   ROLE_PERMISSION_UPDATE_FAILURE: 'err_selene_mod_role_permission_update_failure'
 };
 
-function formatErrorMessage(code, text) {
-  return `[${code}] ${text}`;
+function formatErrorMessage(code, text, error = null) {
+  let message = `[${code}] ${text}`;
+  if (verboseDialogs && error) {
+    message += `\n\nDetails: ${error.message}`;
+    if (error.stack) {
+      message += `\n${error.stack}`;
+    }
+  }
+  return message;
 }
 
 function normalizeCommand(command) {
@@ -55,6 +67,7 @@ if (!TOKEN) {
 }
 
 let warnings = {};
+let verboseDialogs = false;
 try {
   warnings = JSON.parse(fs.readFileSync(WARNING_FILE, 'utf8') || '{}');
 } catch (error) {
@@ -98,7 +111,7 @@ client.on('messageCreate', async (message) => {
         return await handleKick(message, args);
       case 'ban':
         return await handleBan(message, args);
-      case 'mute':
+          case 'mute':
         return await handleMute(message, args);
       case 'unmute':
         return await handleUnmute(message, args);
@@ -106,23 +119,33 @@ client.on('messageCreate', async (message) => {
         return await handlePurge(message, args);
       case 'warn':
         return await handleWarn(message, args);
+      case 'restart':
+        return await handleRestart(message);
+      case 'enable_verbose_dialogs':
+        return await handleVerboseDialogs(message, true);
+      case 'disable_verbose_dialogs':
+        return await handleVerboseDialogs(message, false);
       default:
         return message.reply(formatErrorMessage(ERROR_CODES.UNKNOWN_COMMAND, `Unknown command action. Use \`${PREFIX}help\` for a list of moderation command actions.`));
     }
   } catch (error) {
     console.error(`An error occurred while processing command '${command}': ${error.message}`);
+    return message.reply(formatErrorMessage(ERROR_CODES.INTERNAL_ERROR, 'An internal error occurred while processing your command.', error));
   }
 });
 
 function getHelpText() {
-  return `Selene Moderation Commands:\n` +
+  return `Selene Moderation Framework - Commands:\n` +
     `\`${PREFIX}help\` (alias: \`${PREFIX}garant\`) — Show this help message.\n` +
     `\`${PREFIX}kick @user [reason]\` (alias: \`${PREFIX}phantom\`) — Kick a user from the server.\n` +
     `\`${PREFIX}ban @user [reason]\` (alias: \`${PREFIX}violet\`) — Ban a user from the server.\n` +
     `\`${PREFIX}mute @user\` (alias: \`${PREFIX}iris\`) — Mute a user by assigning a Muted role.\n` +
     `\`${PREFIX}unmute @user\` (alias: \`${PREFIX}iris_revert\`) — Remove the Muted role.\n` +
     `\`${PREFIX}purge <count>\` (alias: \`${PREFIX}hydroxide\`) — Delete the most recent messages.\n` +
-    `\`${PREFIX}warn @user [reason]\` (alias: \`${PREFIX}seraph\`) — Record a warning for a user.`;
+    `\`${PREFIX}warn @user [reason]\` (alias: \`${PREFIX}seraph\`) — Record a warning for a user.\n` +
+    `\`${PREFIX}restart\` (alias: \`${PREFIX}reboot\`) — Restart the bot process.\n` +
+    `\`${PREFIX}enable_verbose_dialogs\` — Enable verbose error dialogs.\n` +
+    `\`${PREFIX}disable_verbose_dialogs\` — Disable verbose error dialogs.`;
 }
 
 function getTargetMember(message, mentionOrId) {
@@ -263,6 +286,39 @@ async function handleWarn(message, args) {
   saveWarnings();
 
   return message.reply(`Warned ${target.user.tag}. Total warnings: ${warnings[userId].length}`);
+}
+
+async function handleVerboseDialogs(message, enabled) {
+  if (!hasPermission(message.member, PermissionsBitField.Flags.Administrator)) {
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_VERBOSE_DIALOGS, 'You need Administrator permission to change verbose dialog mode.'));
+  }
+
+  verboseDialogs = enabled;
+  return message.reply(`Verbose error dialogs ${enabled ? 'enabled' : 'disabled'}.`);
+}
+
+function restartProcess() {
+  const nodeBinary = process.execPath;
+  const scriptArgs = process.argv.slice(1);
+  const child = spawn(nodeBinary, scriptArgs, {
+    stdio: 'inherit',
+    cwd: process.cwd()
+  });
+
+  child.on('error', (error) => {
+    console.error(`Failed to restart Selene: ${error.message}`);
+  });
+}
+
+async function handleRestart(message) {
+  if (!hasPermission(message.member, PermissionsBitField.Flags.Administrator)) {
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_RESTART, 'You need Administrator permission to restart the bot.'));
+  }
+
+  await message.reply('Restarting Selene moderation framework...');
+  restartProcess();
+  await client.destroy();
+  process.exit(0);
 }
 
 client.login(TOKEN);
