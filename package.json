@@ -1,0 +1,14 @@
+{
+  "name": "selene-server-moderation-system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A Discord moderation bot for The Awesome Team server.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.15.0",
+    "dotenv": "^16.3.0"
+  }
+}
