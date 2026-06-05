@@ -45,6 +45,10 @@ function formatErrorMessage(code, text) {
   return `[${code}] ${text}`;
 }
 
+function normalizeCommand(command) {
+  return COMMAND_ALIASES[command] || command;
+}
+
 if (!TOKEN) {
   console.error(`${ERROR_CODES.MISSING_TOKEN}: Missing DISCORD_TOKEN in .env or environment variables.`);
   process.exit(1);
@@ -105,10 +109,6 @@ client.on('messageCreate', async (message) => {
       return message.reply(formatErrorMessage(ERROR_CODES.UNKNOWN_COMMAND, `Unknown command action. Use \`${PREFIX}help\` for a list of moderation commands.`));
   }
 });
-
-function normalizeCommand(command) {
-  return COMMAND_ALIASES[command] || command;
-}
 
 function getHelpText() {
   return `Selene Moderation Commands:\n` +
