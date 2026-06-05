@@ -36,9 +36,9 @@ const ERROR_CODES = {
   USER_ALREADY_MUTED: 'err_selene_mod_user_already_muted',
   USER_NOT_MUTED: 'err_selene_mod_user_not_muted',
   INVALID_PURGE_AMOUNT: 'err_selene_mod_purge_amount_not_within_redlines',
-  WARNING_SAVE_FAILED: 'err_selene_mod_warning_save_failure',
+  WARNING_SAVE_FAILURE: 'err_selene_mod_warning_save_failure',
   UNKNOWN_COMMAND: 'err_selene_mod_command_unknown',
-  ROLE_PERMISSION_UPDATE_WARNING: 'err_selene_mod_role_permission_update_warning'
+  ROLE_PERMISSION_UPDATE_FAILURE: 'err_selene_mod_role_permission_update_failure'
 };
 
 function formatErrorMessage(code, text) {
@@ -81,7 +81,7 @@ const client = new Client({
 });
 
 client.once('ready', () => {
-  console.log(`Selene moderation bot ready as ${client.user.tag}`);
+  console.log(`Selene Moderation Framework ready as ${client.user.tag}`);
 });
 
 client.on('messageCreate', async (message) => {
@@ -107,7 +107,7 @@ client.on('messageCreate', async (message) => {
       case 'warn':
         return await handleWarn(message, args);
       default:
-        return message.reply(formatErrorMessage(ERROR_CODES.UNKNOWN_COMMAND, `Unknown command action. Use \`${PREFIX}help\` for a list of moderation commands.`));
+        return message.reply(formatErrorMessage(ERROR_CODES.UNKNOWN_COMMAND, `Unknown command action. Use \`${PREFIX}help\` for a list of moderation command actions.`));
     }
   } catch (error) {
     console.error(`An error occurred while processing command '${command}': ${error.message}`);
@@ -172,12 +172,12 @@ async function ensureMutedRole(guild) {
 
 async function handleKick(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.KickMembers)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_KICK, 'You need Kick Members permission to use this command.'));
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_KICK, 'You need Kick Members permission to execute this command action.'));
   }
 
   const target = getTargetMember(message, args[0]);
   if (!target) return message.reply(formatErrorMessage(ERROR_CODES.MISSING_TARGET_KICK, 'Please mention a user to kick.'));
-  if (!target.kickable) return message.reply(formatErrorMessage(ERROR_CODES.UNABLE_TO_KICK, 'User is immune to moderation action "kick": Role hierarchy or permissions rendering moderation actions impossible.'));
+  if (!target.kickable) return message.reply(formatErrorMessage(ERROR_CODES.UNABLE_TO_KICK, 'An error has occurred while executing the command action: Role hierarchy or permissions rendering moderation action "!kick" impossible.'));
 
   const reason = args.slice(1).join(' ') || 'No reason provided';
   await target.kick(reason);
@@ -186,12 +186,12 @@ async function handleKick(message, args) {
 
 async function handleBan(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.BanMembers)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_BAN, 'You need Ban Members permission to use this command.'));
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_BAN, 'You need Ban Members permission to execute this command action.'));
   }
 
   const target = getTargetMember(message, args[0]);
   if (!target) return message.reply(formatErrorMessage(ERROR_CODES.MISSING_TARGET_BAN, 'Please mention a user to ban.'));
-  if (!target.bannable) return message.reply(formatErrorMessage(ERROR_CODES.UNABLE_TO_BAN, 'User is immune to moderation action "ban": Role hierarchy or permissions rendering moderation actions impossible.'));
+  if (!target.bannable) return message.reply(formatErrorMessage(ERROR_CODES.UNABLE_TO_BAN, 'An error has occurred while executing the command action: Role hierarchy or permissions rendering moderation action "!ban" impossible.'));
 
   const reason = args.slice(1).join(' ') || 'No reason provided';
   await target.ban({ reason });
@@ -200,7 +200,7 @@ async function handleBan(message, args) {
 
 async function handleMute(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.ManageRoles)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_MUTE, 'You need Manage Roles permission to use this command.'));
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_MUTE, 'You need Manage Roles permission to execute this command action.'));
   }
 
   const target = getTargetMember(message, args[0]);
@@ -211,13 +211,13 @@ async function handleMute(message, args) {
     return message.reply(formatErrorMessage(ERROR_CODES.USER_ALREADY_MUTED, `${target.user.tag} is already muted.`));
   }
 
-  await target.roles.add(muteRole, 'Muted by Selene moderation bot');
+  await target.roles.add(muteRole, 'Muted by Selene Moderation Framework');
   return message.reply(`${target.user.tag} has been muted.`);
 }
 
 async function handleUnmute(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.ManageRoles)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_UNMUTE, 'You need Manage Roles permission to use this command.'));
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_UNMUTE, 'You need Manage Roles permission to execute this command action.'));
   }
 
   const target = getTargetMember(message, args[0]);
@@ -228,18 +228,18 @@ async function handleUnmute(message, args) {
     return message.reply(formatErrorMessage(ERROR_CODES.USER_NOT_MUTED, `${target.user.tag} is not muted.`));
   }
 
-  await target.roles.remove(muteRole, 'Unmuted by Selene moderation bot');
+  await target.roles.remove(muteRole, 'Unmuted by Selene Moderation Framework');
   return message.reply(`${target.user.tag} has been unmuted.`);
 }
 
 async function handlePurge(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.ManageMessages)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_PURGE, 'You need Manage Messages permission to use this command.'));
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_PURGE, 'You need Manage Messages permission to execute this command action.'));
   }
 
   const amount = parseInt(args[0], 10);
   if (Number.isNaN(amount) || amount < 1 || amount > 100) {
-    return message.reply(formatErrorMessage(ERROR_CODES.INVALID_PURGE_AMOUNT, 'Please specify a number between 1 and 100.'));
+    return message.reply(formatErrorMessage(ERROR_CODES.INVALID_PURGE_AMOUNT, 'An error has occurred while executing the command action: Amount of purged messages is not within the numerical redline range. Redline Range: 1 to 100.'));
   }
 
   const deleted = await message.channel.bulkDelete(amount + 1, true);
@@ -250,7 +250,7 @@ async function handlePurge(message, args) {
 
 async function handleWarn(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.ManageMessages)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_WARN, 'You need Manage Messages permission to use this command.'));
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_WARN, 'You need Manage Messages permission to execute this command action.'));
   }
 
   const target = getTargetMember(message, args[0]);
