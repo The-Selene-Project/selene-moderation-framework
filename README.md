@@ -35,3 +35,4 @@ The bot uses `!` as the prefix.
 
 ## Credits
 **ExtremeHydroxides** - Lead Developer
+**IrisBitzyy** - Lead Debugger and Developer
