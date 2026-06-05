@@ -90,23 +90,27 @@ client.on('messageCreate', async (message) => {
   const args = message.content.slice(PREFIX.length).trim().split(/\s+/);
   const command = normalizeCommand(args.shift().toLowerCase());
 
-  switch (command) {
-    case 'help':
-      return message.reply(getHelpText());
-    case 'kick':
-      return handleKick(message, args);
-    case 'ban':
-      return handleBan(message, args);
-    case 'mute':
-      return handleMute(message, args);
-    case 'unmute':
-      return handleUnmute(message, args);
-    case 'purge':
-      return handlePurge(message, args);
-    case 'warn':
-      return handleWarn(message, args);
-    default:
-      return message.reply(formatErrorMessage(ERROR_CODES.UNKNOWN_COMMAND, `Unknown command action. Use \`${PREFIX}help\` for a list of moderation commands.`));
+  try {
+    switch (command) {
+      case 'help':
+        return message.reply(getHelpText());
+      case 'kick':
+        return await handleKick(message, args);
+      case 'ban':
+        return await handleBan(message, args);
+      case 'mute':
+        return await handleMute(message, args);
+      case 'unmute':
+        return await handleUnmute(message, args);
+      case 'purge':
+        return await handlePurge(message, args);
+      case 'warn':
+        return await handleWarn(message, args);
+      default:
+        return message.reply(formatErrorMessage(ERROR_CODES.UNKNOWN_COMMAND, `Unknown command action. Use \`${PREFIX}help\` for a list of moderation commands.`));
+    }
+  } catch (error) {
+    console.error(`An error occurred while processing command '${command}': ${error.message}`);
   }
 });
 
