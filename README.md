@@ -25,6 +25,8 @@ The bot uses `!` as the prefix.
 - `!ban @user [reason]` — Ban a member.
 - `!mute @user` — Assign a `Muted` role and block messaging/speaking.
 - `!unmute @user` — Remove the `Muted` role.
+- `!lockdown` (alias: `!twilight`) — Lock down the current channel so members cannot send messages.
+- `!unlock` (alias: `!daybreak`) — Restore send permissions for the current channel.
 - `!purge <count>` — Delete recent messages from the channel.
 - `!warn @user [reason]` — Record a warning for a member.
 

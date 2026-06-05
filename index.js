@@ -14,7 +14,9 @@ const COMMAND_ALIASES = {
   iris: 'mute',
   iris_revert: 'unmute',
   hydroxide: 'purge',
-  seraph: 'warn'
+  seraph: 'warn',
+  twilight: 'lockdown',
+  daybreak: 'unlock'
 };
 
 const ERROR_CODES = {
@@ -26,6 +28,8 @@ const ERROR_CODES = {
   NO_PERMISSION_UNMUTE: 'err_selene_mod_no_permission_unmute',
   NO_PERMISSION_PURGE: 'err_selene_mod_no_permission_purge',
   NO_PERMISSION_WARN: 'err_selene_mod_no_permission_warn',
+  NO_PERMISSION_LOCKDOWN: 'err_selene_mod_no_permission_lockdown',
+  NO_PERMISSION_UNLOCK: 'err_selene_mod_no_permission_unlock',
   MISSING_TARGET_KICK: 'err_selene_mod_missing_target_kick',
   MISSING_TARGET_BAN: 'err_selene_mod_missing_target_ban',
   MISSING_TARGET_MUTE: 'err_selene_mod_missing_target_mute',
@@ -102,6 +106,10 @@ client.on('messageCreate', async (message) => {
         return await handleMute(message, args);
       case 'unmute':
         return await handleUnmute(message, args);
+      case 'lockdown':
+        return await handleLockdown(message);
+      case 'unlock':
+        return await handleUnlock(message);
       case 'purge':
         return await handlePurge(message, args);
       case 'warn':
@@ -121,6 +129,8 @@ function getHelpText() {
     `\`${PREFIX}ban @user [reason]\` (alias: \`${PREFIX}violet\`) — Ban a user from the server.\n` +
     `\`${PREFIX}mute @user\` (alias: \`${PREFIX}iris\`) — Mute a user by assigning a Muted role.\n` +
     `\`${PREFIX}unmute @user\` (alias: \`${PREFIX}iris_revert\`) — Remove the Muted role.\n` +
+    `\`${PREFIX}lockdown\` (alias: \`${PREFIX}twilight\`) — Lock down the current channel so members can no longer send messages.\n` +
+    `\`${PREFIX}unlock\` (alias: \`${PREFIX}daybreak\`) — Restore send permissions for the current channel.\n` +
     `\`${PREFIX}purge <count>\` (alias: \`${PREFIX}hydroxide\`) — Delete the most recent messages.\n` +
     `\`${PREFIX}warn @user [reason]\` (alias: \`${PREFIX}seraph\`) — Record a warning for a user.`;
 }
@@ -246,6 +256,52 @@ async function handlePurge(message, args) {
   return message.reply(`Deleted ${deleted.size - 1} message(s).`).then((reply) => {
     setTimeout(() => reply.delete().catch(() => {}), 5000);
   });
+}
+
+async function handleLockdown(message) {
+  if (!hasPermission(message.member, PermissionsBitField.Flags.ManageChannels)) {
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_LOCKDOWN, 'You need Manage Channels permission to use this command.'));
+  }
+
+  const channel = message.channel;
+  const everyoneRole = message.guild.roles.everyone;
+  const overwrite = {};
+
+  if ([ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.PublicThread, ChannelType.PrivateThread].includes(channel.type)) {
+    overwrite.SendMessages = false;
+    overwrite.AddReactions = false;
+  } else if ([ChannelType.GuildVoice, ChannelType.GuildStageVoice].includes(channel.type)) {
+    overwrite.Connect = false;
+    overwrite.Speak = false;
+  } else {
+    return message.reply('Unable to lock down this channel type. Use this command in a guild text or voice channel.');
+  }
+
+  await channel.permissionOverwrites.edit(everyoneRole, overwrite);
+  return message.reply(`Channel ${channel.toString()} is now locked down.`);
+}
+
+async function handleUnlock(message) {
+  if (!hasPermission(message.member, PermissionsBitField.Flags.ManageChannels)) {
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_UNLOCK, 'You need Manage Channels permission to use this command.'));
+  }
+
+  const channel = message.channel;
+  const everyoneRole = message.guild.roles.everyone;
+  const overwrite = {};
+
+  if ([ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.PublicThread, ChannelType.PrivateThread].includes(channel.type)) {
+    overwrite.SendMessages = null;
+    overwrite.AddReactions = null;
+  } else if ([ChannelType.GuildVoice, ChannelType.GuildStageVoice].includes(channel.type)) {
+    overwrite.Connect = null;
+    overwrite.Speak = null;
+  } else {
+    return message.reply('Unable to unlock this channel type. Use this command in a guild text or voice channel.');
+  }
+
+  await channel.permissionOverwrites.edit(everyoneRole, overwrite);
+  return message.reply(`Channel ${channel.toString()} has been unlocked.`);
 }
 
 async function handleWarn(message, args) {
