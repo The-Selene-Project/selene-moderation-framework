@@ -37,6 +37,7 @@ The bot uses `!` as the prefix for command aliases too. The syntax for commands 
 - `!iris_revert` — Remove the `Muted` role. (Alias counterpart of `!unmute`)
 - `!hydroxide` — Delete the most recent messages from the channel. (Alias counterpart of `!purge`)
 - `!seraph` — Record a warning for a member. (Alias counterpart of `!warn`)
+
 **NOTICE:** The Command Aliases feature is known for the bug `selene_moderation_framework_bug_002`. The team is working hard to find a permanent resolution to the issue.
 
 ## Notes
