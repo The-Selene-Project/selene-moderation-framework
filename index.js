@@ -7,6 +7,16 @@ const TOKEN = process.env.DISCORD_TOKEN;
 const PREFIX = '!';
 const WARNING_FILE = path.join(__dirname, 'warnings.json');
 
+const COMMAND_ALIASES = {
+  garant: 'help',
+  phantom: 'kick',
+  violet: 'ban',
+  iris: 'mute',
+  iris_revert: 'unmute',
+  hydroxide: 'purge',
+  seraph: 'warn'
+};
+
 const ERROR_CODES = {
   MISSING_TOKEN: 'err_selene_mod_missing_token',
   WARNING_FILE_READ: 'err_selene_mod_warning_file_read',
@@ -74,7 +84,7 @@ client.on('messageCreate', async (message) => {
   if (message.author.bot || !message.guild || !message.content.startsWith(PREFIX)) return;
 
   const args = message.content.slice(PREFIX.length).trim().split(/\s+/);
-  const command = args.shift().toLowerCase();
+  const command = normalizeCommand(args.shift().toLowerCase());
 
   switch (command) {
     case 'help':
@@ -96,15 +106,19 @@ client.on('messageCreate', async (message) => {
   }
 });
 
+function normalizeCommand(command) {
+  return COMMAND_ALIASES[command] || command;
+}
+
 function getHelpText() {
   return `Selene Moderation Commands:\n` +
-    `\`${PREFIX}help\` — Show this help message.\n` +
-    `\`${PREFIX}kick @user [reason]\` — Kick a user from the server.\n` +
-    `\`${PREFIX}ban @user [reason]\` — Ban a user from the server.\n` +
-    `\`${PREFIX}mute @user\` — Mute a user by assigning a Muted role.\n` +
-    `\`${PREFIX}unmute @user\` — Remove the Muted role.\n` +
-    `\`${PREFIX}purge <count>\` — Delete the most recent messages.\n` +
-    `\`${PREFIX}warn @user [reason]\` — Record a warning for a user.`;
+    `\`${PREFIX}help\` (alias: \`${PREFIX}garant\`) — Show this help message.\n` +
+    `\`${PREFIX}kick @user [reason]\` (alias: \`${PREFIX}phantom\`) — Kick a user from the server.\n` +
+    `\`${PREFIX}ban @user [reason]\` (alias: \`${PREFIX}violet\`) — Ban a user from the server.\n` +
+    `\`${PREFIX}mute @user\` (alias: \`${PREFIX}iris\`) — Mute a user by assigning a Muted role.\n` +
+    `\`${PREFIX}unmute @user\` (alias: \`${PREFIX}iris_revert\`) — Remove the Muted role.\n` +
+    `\`${PREFIX}purge <count>\` (alias: \`${PREFIX}hydroxide\`) — Delete the most recent messages.\n` +
+    `\`${PREFIX}warn @user [reason]\` (alias: \`${PREFIX}seraph\`) — Record a warning for a user.`;
 }
 
 function getTargetMember(message, mentionOrId) {
