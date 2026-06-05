@@ -153,9 +153,9 @@ function getHelpText() {
     `\`${PREFIX}unlock\` (alias: \`${PREFIX}daybreak\`) — Restore send permissions for the current channel.\n` +
     `\`${PREFIX}purge <count>\` (alias: \`${PREFIX}hydroxide\`) — Delete the most recent messages.\n` +
     `\`${PREFIX}warn @user [reason]\` (alias: \`${PREFIX}seraph\`) — Record a warning for a user.\n` +
-    `\`${PREFIX}restart\` (alias: \`${PREFIX}reboot\`) — Restart the bot process.\n` +
-    `\`${PREFIX}enable_verbose_dialogs\` — Enable verbose error dialogs.\n` +
-    `\`${PREFIX}disable_verbose_dialogs\` — Disable verbose error dialogs.`;
+    `\`${PREFIX}restart\` (alias: \`${PREFIX}reboot\`) — Restart the bot process. DO NOT USE UNLESS ABSOLUTELY NECESSARY!\n` +
+    `\`${PREFIX}enable_verbose_dialogs\` — Enable verbose error dialogs. Use only for debugging purposes.\n` +
+    `\`${PREFIX}disable_verbose_dialogs\` — Disable verbose error dialogs. Recommended for normal operation.`;
 }
 
 function getTargetMember(message, mentionOrId) {
