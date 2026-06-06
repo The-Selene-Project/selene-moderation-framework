@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const { Client, GatewayIntentBits, Partials, PermissionsBitField, ChannelType, EmbedBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, Partials, PermissionsBitField, ActivityType, ChannelType, EmbedBuilder } = require('discord.js');
 require('dotenv').config();
 
 const TOKEN = process.env.DISCORD_TOKEN;
@@ -128,8 +128,21 @@ const client = new Client({
   partials: [Partials.Channel, Partials.GuildMember]
 });
 
-client.once('ready', () => {
+client.once('ready', async () => {
   console.log(`Selene Moderation Framework ready as ${client.user.tag}`);
+
+  const BOT_STATUS_NAME = process.env.BOT_STATUS_NAME || 'Protecting the server';
+  const BOT_STATUS_TYPE = ActivityType[process.env.BOT_STATUS_TYPE?.toUpperCase()] || ActivityType.Watching;
+  const BOT_STATUS = process.env.BOT_STATUS || 'online';
+
+  try {
+    await client.user.setPresence({
+      activities: [{ name: BOT_STATUS_NAME, type: BOT_STATUS_TYPE }],
+      status: BOT_STATUS
+    });
+  } catch (presenceError) {
+    console.warn('Failed to set bot presence:', presenceError);
+  }
 
   // Send a startup announcement to a configured channel or a sensible default
   (async () => {
