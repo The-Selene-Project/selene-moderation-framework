@@ -3,6 +3,8 @@ The **Selene Moderation Framework (SELMF)** is a Discord application designed fo
 Currently, SELMF is planned to be released only for **The Awesome Team**, a Discord community server.
 > The discord link for [The Awesome Team](https://discord.gg/pfzEnYJSKf).
 
+> "Simplifying Moderation, for everybody." - Motto of the Selene Moderation Framework
+
 ## Setup
 1. Install dependencies:
    ```bash
@@ -46,6 +48,7 @@ From Windows (Command Prompt or PowerShell):
 ```powershell
 start-selene.cmd
 ```
+**NOTICE:** This method is difficult if you set this up incorrectly, unless you have done that before. Contact IrisBitzyy on Discord (username: irisbitzyy) for assistance if needed.
 
 ## Remote Codespace startup
 To initialize Selene from outside the Codespace using GitHub Codespaces CLI:
@@ -128,6 +131,7 @@ The bot uses `!` as the prefix for command aliases too. The syntax for commands 
 - The `Muted` role is created automatically when the bot mutes a member.
 - Warnings are stored in `warnings.json` (ignored from git by `.gitignore`).
 - Trusted framework users (users with the Elevated Framework Authority permission) are stored in `trusted_framework_users.json` (ignored from git by `.gitignore`).
+- Initializing multiple instances of SELMF will cause the bug `selene_moderation_framework_bug_002`, internally known as Iris's Aberration of Initialization, in which multiple instances of the framework try to respond to a command simultaneously, resulting in multiple outputs with the same content.
 
 ## Credits
 **ExtremeHydroxides** - Lead Developer
