@@ -62,7 +62,7 @@ Selene can send a startup announcement message when it becomes ready. Configure 
 - `STARTUP_ANNOUNCE_GUILD_ID` — (optional) guild ID to prefer when selecting a channel (falls back to system channel or the first writable text channel).
 
 - `STARTUP_ANNOUNCE_TEXT` — (optional) custom message to post when Selene starts. Defaults to: `Selene Moderation Framework initialized successfully. All subcomponents nominal.`
--
+
 Notes on line breaks:
 
 - If you need multiple lines in your announcement, include `\n` where you want a line break; the bot will convert those sequences into actual newlines when sending the message. Example:
@@ -117,14 +117,18 @@ The bot uses `!` as the prefix for command aliases too. The syntax for commands 
 - `!reboot` — Restart the bot process. (Alias counterpart of `!restart`)
 - `!cease` — Shut down the bot process. (Alias counterpart of `!halt`)
 
-**NOTICE:** The Command Aliases feature is known for the bug `selene_moderation_framework_bug_002`. The team is working hard to find a permanent resolution to the issue.
+**NOTICE:** The Command Aliases feature is known for the bug `selene_moderation_framework_bug_002`. The team is working hard to find a permanent resolution to the issue. This issue seems to have been resolved in Version 1.0.0 Release Candidate 1, `Build codename "Hydroxide" (Build number: SEL-MF100IRX/RC1)`.
 
 ## Notes
-- The bot requires appropriate server permissions to manage roles, kick/ban members, and delete messages.
+- The bot requires the Administrator permission to function properly, as of Version 1.0.0 Release Candidate 1.
 - The `Muted` role is created automatically when the bot mutes a member.
 - Warnings are stored in `warnings.json` (ignored from git by `.gitignore`).
+- Trusted framework users (users with the Elevated Framework Authority permission) are stored in `trusted_framework_users.json` (ignored from git by `.gitignore`)
 
 ## Credits
 **ExtremeHydroxides** - Lead Developer
 
 **IrisBitzyy** - Lead Debugger and Developer
+
+## Special Thanks to
+**Community of The Awesome Team** - Without them, this project wouldn't be possible. The Selene Project team sincerely thanks them for their support.
