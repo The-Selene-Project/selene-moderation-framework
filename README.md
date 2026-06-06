@@ -54,6 +54,22 @@ gh codespace exec -- npm run boot
 
 This command executes in the Codespace workspace root, so make sure the Codespace is running and you are authenticated.
 
+## Startup announcement
+
+Selene can send a startup announcement message when it becomes ready. Configure one or both of the following environment variables in your `.env` file:
+
+- `STARTUP_ANNOUNCE_CHANNEL_ID` — (optional) channel ID to post the announcement to.
+- `STARTUP_ANNOUNCE_GUILD_ID` — (optional) guild ID to prefer when selecting a channel (falls back to system channel or the first writable text channel).
+
+Example `.env` entries:
+
+```ini
+STARTUP_ANNOUNCE_CHANNEL_ID=123456789012345678
+STARTUP_ANNOUNCE_GUILD_ID=987654321098765432
+```
+
+If neither is set, the bot will attempt to send the announcement to each guild's system channel or the first text channel where it has send permissions.
+
 ## Commands
 The bot uses `!` as the prefix.
 - `!help` — Show available moderation commands.

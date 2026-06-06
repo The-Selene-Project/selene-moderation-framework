@@ -129,6 +129,52 @@ const client = new Client({
 
 client.once('ready', () => {
   console.log(`Selene Moderation Framework ready as ${client.user.tag}`);
+
+  // Send a startup announcement to a configured channel or a sensible default
+  (async () => {
+    const text = 'Selene Moderation Framework initialized successfully. All subcomponents nominal.';
+    const channelId = process.env.STARTUP_ANNOUNCE_CHANNEL_ID;
+    const guildId = process.env.STARTUP_ANNOUNCE_GUILD_ID;
+
+    try {
+      let channel = null;
+
+      if (channelId) {
+        channel = await client.channels.fetch(channelId).catch(() => null);
+      }
+
+      if (!channel && guildId) {
+        const guild = client.guilds.cache.get(guildId);
+        if (guild) {
+          channel = guild.systemChannel || guild.channels.cache.find(c => c.isTextBased && c.permissionsFor(guild.members.me)?.has(PermissionsBitField.Flags.SendMessages));
+        }
+      }
+
+      if (!channel) {
+        for (const guild of client.guilds.cache.values()) {
+          const sys = guild.systemChannel;
+          if (sys && sys.isTextBased && sys.permissionsFor(guild.members.me)?.has(PermissionsBitField.Flags.SendMessages)) {
+            channel = sys;
+            break;
+          }
+
+          const found = guild.channels.cache.find(c => c.isTextBased && c.permissionsFor(guild.members.me)?.has(PermissionsBitField.Flags.SendMessages));
+          if (found) {
+            channel = found;
+            break;
+          }
+        }
+      }
+
+      if (channel) {
+        await channel.send(text).catch(() => {});
+      } else {
+        console.warn('No suitable channel found to send startup announcement.');
+      }
+    } catch (err) {
+      console.warn('Failed to send startup announcement:', err && err.message ? err.message : err);
+    }
+  })();
 });
 
 client.on('messageCreate', async (message) => {
