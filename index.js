@@ -244,7 +244,7 @@ async function ensureMutedRole(guild) {
 
 async function handleKick(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.KickMembers)) {
-    return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_KICK, 'You need Kick Members permission to execute this command action.'));
+    return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_KICK, 'You need Kick Members permission to execute this command action. To bypass, ask an administrator to grant you elevated framework authority, which allows execution of admin-level commands within this bot without needing the corresponding Discord permissions. Elevated framework authority can be granted using the command `!elevate_framework_authority`.'));
   }
 
   const target = getTargetMember(message, args[0]);
@@ -258,7 +258,7 @@ async function handleKick(message, args) {
 
 async function handleBan(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.BanMembers)) {
-    return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_BAN, 'You need Ban Members permission to execute this command action.'));
+    return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_BAN, 'You need Ban Members permission to execute this command action. To bypass, ask an administrator to grant you elevated framework authority, which allows execution of admin-level commands within this bot without needing the corresponding Discord permissions. Elevated framework authority can be granted using the command `!elevate_framework_authority`.'));
   }
 
   const target = getTargetMember(message, args[0]);
