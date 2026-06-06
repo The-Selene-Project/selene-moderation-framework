@@ -62,6 +62,19 @@ Selene can send a startup announcement message when it becomes ready. Configure 
 - `STARTUP_ANNOUNCE_GUILD_ID` — (optional) guild ID to prefer when selecting a channel (falls back to system channel or the first writable text channel).
 
 - `STARTUP_ANNOUNCE_TEXT` — (optional) custom message to post when Selene starts. Defaults to: `Selene Moderation Framework initialized successfully. All subcomponents nominal.`
+-
+Notes on line breaks:
+
+- If you need multiple lines in your announcement, include `\n` where you want a line break; the bot will convert those sequences into actual newlines when sending the message. Example:
+
+```ini
+STARTUP_ANNOUNCE_TEXT=Selene is online.\nAll subsystems nominal.\nHave a great day!
+```
+
+- `STARTUP_ANNOUNCE_FORMAT` — (optional) `plain` (default) or `embed`. If set to `embed`, the announcement is sent as an embed (embed descriptions support a subset of Markdown).
+
+Notes:
+- The bot will render basic Markdown in plain messages (bold, italic, code blocks, links). For richer presentation, set `STARTUP_ANNOUNCE_FORMAT=embed` and use Markdown-compatible formatting in `STARTUP_ANNOUNCE_TEXT`.
 
 Example `.env` entries:
 

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const { Client, GatewayIntentBits, Partials, PermissionsBitField, ChannelType } = require('discord.js');
+const { Client, GatewayIntentBits, Partials, PermissionsBitField, ChannelType, EmbedBuilder } = require('discord.js');
 require('dotenv').config();
 
 const TOKEN = process.env.DISCORD_TOKEN;
@@ -133,7 +133,9 @@ client.once('ready', () => {
 
   // Send a startup announcement to a configured channel or a sensible default
   (async () => {
-    const text = process.env.STARTUP_ANNOUNCE_TEXT || 'Selene Moderation Framework initialized successfully. All subcomponents nominal.';
+    const rawText = process.env.STARTUP_ANNOUNCE_TEXT || 'Selene Moderation Framework initialized successfully. All subcomponents nominal.';
+    // Convert escaped \n sequences into actual line breaks so users can configure multiline messages in .env
+    const text = String(rawText).replace(/\\n/g, '\n');
     const channelId = process.env.STARTUP_ANNOUNCE_CHANNEL_ID;
     const guildId = process.env.STARTUP_ANNOUNCE_GUILD_ID;
 
@@ -167,8 +169,22 @@ client.once('ready', () => {
         }
       }
 
+      const format = (process.env.STARTUP_ANNOUNCE_FORMAT || '').toLowerCase();
+
       if (channel) {
-        await channel.send(text).catch(() => {});
+        if (format === 'embed') {
+          try {
+            const embed = new EmbedBuilder().setTitle('Selene Initialized').setDescription(text).setColor(0x57F287).setTimestamp();
+            // Discord embed descriptions support a subset of markdown
+            await channel.send({ embeds: [embed] }).catch(() => {});
+          } catch (e) {
+            // fallback to plain text
+            await channel.send(text).catch(() => {});
+          }
+        } else {
+          // plain text (supports markdown by default)
+          await channel.send({ content: text }).catch(() => {});
+        }
       } else {
         console.warn('No suitable channel found to send startup announcement.');
       }
