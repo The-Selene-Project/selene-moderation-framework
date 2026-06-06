@@ -195,7 +195,13 @@ client.once('ready', () => {
 });
 
 client.on('messageCreate', async (message) => {
-  if (message.author.bot || !message.guild || !message.content.startsWith(PREFIX)) return;
+  if (message.author.bot || !message.guild) return;
+
+  if (message.content === 'TST is cool') {
+    return message.channel.send('The community deserves to enjoy their time without technical issues. - ExtremeHydroxides, Technical Operations Manager');
+  }
+
+  if (!message.content.startsWith(PREFIX)) return;
 
   const args = message.content.slice(PREFIX.length).trim().split(/\s+/);
   const command = normalizeCommand(args.shift().toLowerCase());
