@@ -66,6 +66,7 @@ The bot uses `!` as the prefix.
 - `!purge <count>` — Delete recent messages from the channel.
 - `!warn @user [reason]` — Record a warning for a member.
 - `!restart` — Restart the bot process.
+- `!halt` — Shut down the bot process.
 - `!enable_verbose_dialogs` — Enable verbose error dialogs.
 - `!disable_verbose_dialogs` — Disable verbose error dialogs.
 
@@ -81,6 +82,7 @@ The bot uses `!` as the prefix for command aliases too. The syntax for commands 
 - `!hydroxide` — Delete the most recent messages from the channel. (Alias counterpart of `!purge`)
 - `!seraph` — Record a warning for a member. (Alias counterpart of `!warn`)
 - `!reboot` — Restart the bot process. (Alias counterpart of `!restart`)
+- `!cease` — Shut down the bot process. (Alias counterpart of `!halt`)
 
 **NOTICE:** The Command Aliases feature is known for the bug `selene_moderation_framework_bug_002`. The team is working hard to find a permanent resolution to the issue.
 

@@ -18,7 +18,8 @@ const COMMAND_ALIASES = {
   seraph: 'warn',
   twilight: 'lockdown',
   daybreak: 'unlock',
-  reboot: 'restart'
+  reboot: 'restart',
+  cease: 'halt'
 };
 
 const ERROR_CODES = {
@@ -33,6 +34,7 @@ const ERROR_CODES = {
   NO_PERMISSION_LOCKDOWN: 'err_selene_mod_no_permission_lockdown',
   NO_PERMISSION_UNLOCK: 'err_selene_mod_no_permission_unlock',
   NO_PERMISSION_RESTART: 'err_selene_mod_no_permission_restart',
+  NO_PERMISSION_HALT: 'err_selene_mod_no_permission_halt',
   NO_PERMISSION_VERBOSE_DIALOGS: 'err_selene_mod_no_permission_verbose_dialogs',
   INTERNAL_ERROR: 'err_selene_mod_internal_error',
   MISSING_TARGET_KICK: 'err_selene_mod_missing_target_kick',
@@ -129,6 +131,8 @@ client.on('messageCreate', async (message) => {
         return await handleWarn(message, args);
       case 'restart':
         return await handleRestart(message);
+      case 'halt':
+        return await handleHalt(message);
       case 'enable_verbose_dialogs':
         return await handleVerboseDialogs(message, true);
       case 'disable_verbose_dialogs':
@@ -154,6 +158,7 @@ function getHelpText() {
     `\`${PREFIX}purge <count>\` (alias: \`${PREFIX}hydroxide\`) — Delete the most recent messages.\n` +
     `\`${PREFIX}warn @user [reason]\` (alias: \`${PREFIX}seraph\`) — Record a warning for a user.\n` +
     `\`${PREFIX}restart\` (alias: \`${PREFIX}reboot\`) — Restart the bot process. DO NOT USE UNLESS ABSOLUTELY NECESSARY!\n` +
+    `\`${PREFIX}halt\` (alias: \`${PREFIX}cease\`) — Shut down the bot process. Use this when you want Selene to stop running.\n` +
     `\`${PREFIX}enable_verbose_dialogs\` — Enable verbose error dialogs. Use only for debugging purposes.\n` +
     `\`${PREFIX}disable_verbose_dialogs\` — Disable verbose error dialogs. Recommended for normal operation.`;
 }
@@ -379,6 +384,16 @@ async function handleRestart(message) {
   process.exit(0);
 }
 
+async function handleHalt(message) {
+  if (!hasPermission(message.member, PermissionsBitField.Flags.Administrator)) {
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_HALT, 'You need Administrator permission to halt the bot.'));
+  }
+
+  await message.reply('Shutting down Selene Moderation Framework...');
+  await client.destroy();
+  process.exit(0);
+}
+
 async function handleVerboseDialogs(message, enabled) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.Administrator)) {
     return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_VERBOSE_DIALOGS, 'You need Administrator permission to change verbose dialog mode.'));
@@ -406,7 +421,7 @@ async function handleRestart(message) {
     return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_RESTART, 'You need Administrator permission to restart the bot.'));
   }
 
-  await message.reply('Restarting Selene moderation framework...');
+  await message.reply('Restarting Selene Moderation Framework...');
   restartProcess();
   await client.destroy();
   process.exit(0);
