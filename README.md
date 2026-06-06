@@ -124,7 +124,7 @@ The bot uses `!` as the prefix for command aliases too. The syntax for commands 
 **NOTICE:** The Command Aliases feature is known for the bug `selene_moderation_framework_bug_002`. The team is working hard to find a permanent resolution to the issue. This issue seems to have been resolved in Version 1.0.0 Release Candidate 1, `Build codename "Hydroxide" (Build number: SEL-MF100IRX/RC1)`.
 
 ## Notes
-- The bot requires the Administrator permission to function properly, as of Version 1.0.0 Release Candidate 1.
+- The bot requires the Administrator permission to function properly, after Version 1.0.0 Release Candidate 1.
 - The `Muted` role is created automatically when the bot mutes a member.
 - Warnings are stored in `warnings.json` (ignored from git by `.gitignore`).
 - Trusted framework users (users with the Elevated Framework Authority permission) are stored in `trusted_framework_users.json` (ignored from git by `.gitignore`).
