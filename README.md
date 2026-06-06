@@ -13,6 +13,7 @@ Currently, SELMF is planned to be released only for **The Awesome Team**, a Disc
    cp .env.example .env
    ```
 3. Set `DISCORD_TOKEN` in `.env`.
+   (Steps 1 and 2 can be skipped, for that you need to ask for a pre-made .env file from the developers.)
 
 ## Run from repository root
 Always run startup commands from the repo root where `package.json` lives.
