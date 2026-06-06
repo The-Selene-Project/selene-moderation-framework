@@ -61,6 +61,8 @@ Selene can send a startup announcement message when it becomes ready. Configure 
 - `STARTUP_ANNOUNCE_CHANNEL_ID` — (optional) channel ID to post the announcement to.
 - `STARTUP_ANNOUNCE_GUILD_ID` — (optional) guild ID to prefer when selecting a channel (falls back to system channel or the first writable text channel).
 
+- `STARTUP_ANNOUNCE_TEXT` — (optional) custom message to post when Selene starts. Defaults to: `Selene Moderation Framework initialized successfully. All subcomponents nominal.`
+
 Example `.env` entries:
 
 ```ini

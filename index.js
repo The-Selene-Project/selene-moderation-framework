@@ -133,7 +133,7 @@ client.once('ready', () => {
 
   // Send a startup announcement to a configured channel or a sensible default
   (async () => {
-    const text = 'Selene Moderation Framework initialized successfully. All subcomponents nominal.';
+    const text = process.env.STARTUP_ANNOUNCE_TEXT || 'Selene Moderation Framework initialized successfully. All subcomponents nominal.';
     const channelId = process.env.STARTUP_ANNOUNCE_CHANNEL_ID;
     const guildId = process.env.STARTUP_ANNOUNCE_GUILD_ID;
 
