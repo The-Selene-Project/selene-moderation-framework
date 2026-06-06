@@ -123,7 +123,7 @@ The bot uses `!` as the prefix for command aliases too. The syntax for commands 
 - The bot requires the Administrator permission to function properly, as of Version 1.0.0 Release Candidate 1.
 - The `Muted` role is created automatically when the bot mutes a member.
 - Warnings are stored in `warnings.json` (ignored from git by `.gitignore`).
-- Trusted framework users (users with the Elevated Framework Authority permission) are stored in `trusted_framework_users.json` (ignored from git by `.gitignore`)
+- Trusted framework users (users with the Elevated Framework Authority permission) are stored in `trusted_framework_users.json` (ignored from git by `.gitignore`).
 
 ## Credits
 **ExtremeHydroxides** - Lead Developer
