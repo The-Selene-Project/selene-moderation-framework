@@ -5,7 +5,8 @@
   "description": "A Discord moderation bot for The Awesome Team server.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "boot": "npm run start"
   },
   "dependencies": {
     "discord.js": "^14.15.0",

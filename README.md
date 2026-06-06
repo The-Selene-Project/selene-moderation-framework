@@ -13,10 +13,46 @@ Currently, SELMF is planned to be released only for **The Awesome Team**, a Disc
    cp .env.example .env
    ```
 3. Set `DISCORD_TOKEN` in `.env`.
-4. Start the bot:
-   ```bash
-   npm start
-   ```
+
+## Run from repository root
+Always run startup commands from the repo root where `package.json` lives.
+In this workspace, that is:
+```bash
+cd /workspaces/selene-server-moderation-system
+```
+
+If you are already in the repo root, simply run the startup commands directly.
+
+## Start locally
+From Linux/macOS or Windows, you can start Selene using one of these commands:
+
+```bash
+npm start
+# or
+npm run boot
+```
+
+## Cross-platform startup scripts
+There are helper scripts for each platform:
+
+From Linux/macOS:
+```bash
+./start-selene.sh
+```
+
+From Windows (Command Prompt or PowerShell):
+```powershell
+start-selene.cmd
+```
+
+## Remote Codespace startup
+To initialize Selene from outside the Codespace using GitHub Codespaces CLI:
+
+```bash
+gh codespace exec -- npm run boot
+```
+
+This command executes in the Codespace workspace root, so make sure the Codespace is running and you are authenticated.
 
 ## Commands
 The bot uses `!` as the prefix.
