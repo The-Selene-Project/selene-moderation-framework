@@ -7,6 +7,7 @@ require('dotenv').config();
 const TOKEN = process.env.DISCORD_TOKEN;
 const PREFIX = '!';
 const WARNING_FILE = path.join(__dirname, 'warnings.json');
+const TRUSTED_USERS_FILE = path.join(__dirname, 'trusted_framework_users.json');
 
 const COMMAND_ALIASES = {
   garant: 'help',
@@ -35,6 +36,8 @@ const ERROR_CODES = {
   NO_PERMISSION_UNLOCK: 'err_selene_mod_no_permission_unlock',
   NO_PERMISSION_RESTART: 'err_selene_mod_no_permission_restart',
   NO_PERMISSION_HALT: 'err_selene_mod_no_permission_halt',
+  NO_PERMISSION_ELEVATE: 'err_selene_mod_no_permission_elevate',
+  NO_PERMISSION_DEBASE: 'err_selene_mod_no_permission_debase',
   NO_PERMISSION_VERBOSE_DIALOGS: 'err_selene_mod_no_permission_verbose_dialogs',
   INTERNAL_ERROR: 'err_selene_mod_internal_error',
   MISSING_TARGET_KICK: 'err_selene_mod_missing_target_kick',
@@ -81,12 +84,37 @@ try {
   console.warn(`${ERROR_CODES.WARNING_FILE_READ}: Could not read or parse warnings file: ${error.message}`);
 }
 
+let trustedUsers = {};
+try {
+  trustedUsers = JSON.parse(fs.readFileSync(TRUSTED_USERS_FILE, 'utf8') || '{}');
+} catch (error) {
+  trustedUsers = {};
+  console.warn(`err_selene_mod_trusted_users_read: Could not read or parse trusted users file: ${error.message}`);
+}
+
 function saveWarnings() {
   try {
     fs.writeFileSync(WARNING_FILE, JSON.stringify(warnings, null, 2));
   } catch (error) {
-    console.warn(`${ERROR_CODES.WARNING_SAVE_FAILED}: Could not save warnings file: ${error.message}`);
+    console.warn(`${ERROR_CODES.WARNING_SAVE_FAILURE}: Could not save warnings file: ${error.message}`);
   }
+}
+
+function saveTrustedUsers() {
+  try {
+    fs.writeFileSync(TRUSTED_USERS_FILE, JSON.stringify(trustedUsers, null, 2));
+  } catch (error) {
+    console.warn(`err_selene_mod_trusted_users_save: Could not save trusted users file: ${error.message}`);
+  }
+}
+
+function isElevatedUser(member) {
+  if (!member) return false;
+  return Boolean(trustedUsers[member.id]);
+}
+
+function hasAdminAuthority(member) {
+  return member.permissions.has(PermissionsBitField.Flags.Administrator) || isElevatedUser(member);
 }
 
 const client = new Client({
@@ -133,6 +161,10 @@ client.on('messageCreate', async (message) => {
         return await handleRestart(message);
       case 'halt':
         return await handleHalt(message);
+      case 'elevate_framework_authority':
+        return await handleElevateFrameworkAuthority(message, args);
+      case 'debase_framework_authority':
+        return await handleDebaseFrameworkAuthority(message, args);
       case 'enable_verbose_dialogs':
         return await handleVerboseDialogs(message, true);
       case 'disable_verbose_dialogs':
@@ -159,6 +191,8 @@ function getHelpText() {
     `\`${PREFIX}warn @user [reason]\` (alias: \`${PREFIX}seraph\`) — Record a warning for a user.\n` +
     `\`${PREFIX}restart\` (alias: \`${PREFIX}reboot\`) — Restart the bot process. DO NOT USE UNLESS ABSOLUTELY NECESSARY!\n` +
     `\`${PREFIX}halt\` (alias: \`${PREFIX}cease\`) — Shut down the bot process. Use this when you want Selene to stop running. Used by developers for maintenance and updating purposes.\n` +
+    `\`${PREFIX}elevate_framework_authority\` — Grant framework authority to a user so they may execute admin-only commands. Administrator only.\n` +
+    `\`${PREFIX}debase_framework_authority\` — Revoke previously granted framework authority from a user. Administrator only.\n` +
     `\`${PREFIX}enable_verbose_dialogs\` — Enable verbose error dialogs. Use only for debugging purposes.\n` +
     `\`${PREFIX}disable_verbose_dialogs\` — Disable verbose error dialogs. Recommended for normal operation.`;
 }
@@ -352,8 +386,8 @@ async function handleWarn(message, args) {
 }
 
 async function handleVerboseDialogs(message, enabled) {
-  if (!hasPermission(message.member, PermissionsBitField.Flags.Administrator)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_VERBOSE_DIALOGS, 'You need Administrator permission to change verbose dialog mode.'));
+  if (!hasAdminAuthority(message.member)) {
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_VERBOSE_DIALOGS, 'You need Administrator permission or elevated framework authority to change verbose dialog mode.'));
   }
 
   verboseDialogs = enabled;
@@ -374,8 +408,8 @@ function restartProcess() {
 }
 
 async function handleRestart(message) {
-  if (!hasPermission(message.member, PermissionsBitField.Flags.Administrator)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_RESTART, 'You need Administrator permission to restart the bot.'));
+  if (!hasAdminAuthority(message.member)) {
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_RESTART, 'You need Administrator permission or elevated framework authority to restart the bot.'));
   }
 
   await message.reply('Restarting Selene moderation framework...');
@@ -385,8 +419,8 @@ async function handleRestart(message) {
 }
 
 async function handleHalt(message) {
-  if (!hasPermission(message.member, PermissionsBitField.Flags.Administrator)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_HALT, 'You need Administrator permission to halt the bot.'));
+  if (!hasAdminAuthority(message.member)) {
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_HALT, 'You need Administrator permission or elevated framework authority to halt the bot.'));
   }
 
   await message.reply('Shutting down Selene Moderation Framework...');
@@ -394,37 +428,51 @@ async function handleHalt(message) {
   process.exit(0);
 }
 
-async function handleVerboseDialogs(message, enabled) {
+async function handleElevateFrameworkAuthority(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.Administrator)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_VERBOSE_DIALOGS, 'You need Administrator permission to change verbose dialog mode.'));
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_ELEVATE, 'You need Administrator permission to grant framework authority.'));
   }
 
-  verboseDialogs = enabled;
-  return message.reply(`Verbose error dialogs ${enabled ? 'enabled' : 'disabled'}.`);
-}
-
-function restartProcess() {
-  const nodeBinary = process.execPath;
-  const scriptArgs = process.argv.slice(1);
-  const child = spawn(nodeBinary, scriptArgs, {
-    stdio: 'inherit',
-    cwd: process.cwd()
-  });
-
-  child.on('error', (error) => {
-    console.error(`Failed to restart Selene: ${error.message}`);
-  });
-}
-
-async function handleRestart(message) {
-  if (!hasPermission(message.member, PermissionsBitField.Flags.Administrator)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_RESTART, 'You need Administrator permission to restart the bot.'));
+  const target = getTargetMember(message, args[0]);
+  if (!target) {
+    return message.reply(formatErrorMessage(ERROR_CODES.MISSING_TARGET_WARN, 'Please mention a user to elevate.'));
   }
 
-  await message.reply('Restarting Selene Moderation Framework...');
-  restartProcess();
-  await client.destroy();
-  process.exit(0);
+  if (target.user.bot) {
+    return message.reply('Bots cannot be granted framework authority.');
+  }
+
+  if (isElevatedUser(target)) {
+    return message.reply(`${target.user.tag} already has elevated framework authority.`);
+  }
+
+  trustedUsers[target.id] = {
+    grantedBy: message.author.id,
+    grantedAt: new Date().toISOString()
+  };
+  saveTrustedUsers();
+
+  return message.reply(`${target.user.tag} has been granted elevated framework authority. They may now execute admin-level commands when this bot validates authority.`);
+}
+
+async function handleDebaseFrameworkAuthority(message, args) {
+  if (!hasPermission(message.member, PermissionsBitField.Flags.Administrator)) {
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_DEBASE, 'You need Administrator permission to revoke framework authority.'));
+  }
+
+  const target = getTargetMember(message, args[0]);
+  if (!target) {
+    return message.reply(formatErrorMessage(ERROR_CODES.MISSING_TARGET_WARN, 'Please mention a user to debase.'));
+  }
+
+  if (!isElevatedUser(target)) {
+    return message.reply(`${target.user.tag} does not currently have elevated framework authority.`);
+  }
+
+  delete trustedUsers[target.id];
+  saveTrustedUsers();
+
+  return message.reply(`${target.user.tag} has had elevated framework authority revoked.`);
 }
 
 client.login(TOKEN);

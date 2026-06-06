@@ -67,6 +67,8 @@ The bot uses `!` as the prefix.
 - `!warn @user [reason]` — Record a warning for a member.
 - `!restart` — Restart the bot process.
 - `!halt` — Shut down the bot process.
+- `!elevate_framework_authority` — Grant framework authority to a user so they may execute admin-level commands. Administrator only.
+- `!debase_framework_authority` — Revoke previously granted framework authority from a user. Administrator only.
 - `!enable_verbose_dialogs` — Enable verbose error dialogs.
 - `!disable_verbose_dialogs` — Disable verbose error dialogs.
 
