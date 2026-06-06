@@ -20,7 +20,8 @@ const COMMAND_ALIASES = {
   twilight: 'lockdown',
   daybreak: 'unlock',
   reboot: 'restart',
-  cease: 'halt'
+  cease: 'halt',
+  viper: 'validate_framework_integrity'
 };
 
 const ERROR_CODES = {
@@ -211,6 +212,8 @@ client.on('messageCreate', async (message) => {
         return await handleElevateFrameworkAuthority(message, args);
       case 'debase_framework_authority':
         return await handleDebaseFrameworkAuthority(message, args);
+      case 'validate_framework_integrity':
+        return await handleValidateFrameworkIntegrity(message);
       case 'enable_verbose_dialogs':
         return await handleVerboseDialogs(message, true);
       case 'disable_verbose_dialogs':
@@ -239,6 +242,7 @@ function getHelpText() {
     `\`${PREFIX}halt\` (alias: \`${PREFIX}cease\`) — Shut down the bot process. Use this when you want Selene to stop running. Used by developers for maintenance and updating purposes.\n` +
     `\`${PREFIX}elevate_framework_authority\` — Grant framework authority to a user so they may execute admin-only commands. Administrator only.\n` +
     `\`${PREFIX}debase_framework_authority\` — Revoke previously granted framework authority from a user. Administrator only.\n` +
+    `\`${PREFIX}validate_framework_integrity\` (alias: \`${PREFIX}viper\`) — Run an integrity check of core subcomponents and features.\n` +
     `\`${PREFIX}enable_verbose_dialogs\` — Enable verbose error dialogs. Use only for debugging purposes.\n` +
     `\`${PREFIX}disable_verbose_dialogs\` — Disable verbose error dialogs. Recommended for normal operation.`;
 }
@@ -519,6 +523,108 @@ async function handleDebaseFrameworkAuthority(message, args) {
   saveTrustedUsers();
 
   return message.reply(`${target.user.tag} has had elevated framework authority revoked.`);
+}
+
+async function handleValidateFrameworkIntegrity(message) {
+  const checks = [];
+
+  // 1) Gateway / client ready
+  try {
+    const gatewayOk = Boolean(client.isReady && client.isReady());
+    checks.push({ name: 'Gateway', ok: gatewayOk });
+  } catch (e) {
+    checks.push({ name: 'Gateway', ok: false });
+  }
+
+  // 2) Warnings file accessibility
+  try {
+    fs.accessSync(WARNING_FILE, fs.constants.R_OK | fs.constants.W_OK);
+    checks.push({ name: 'Warnings file (warnings.json)', ok: true });
+  } catch (e) {
+    checks.push({ name: 'Warnings file (warnings.json)', ok: false });
+  }
+
+  // 3) Trusted users file accessibility (can be created)
+  try {
+    fs.accessSync(TRUSTED_USERS_FILE, fs.constants.R_OK | fs.constants.W_OK);
+    checks.push({ name: 'Trusted users persistence', ok: true });
+  } catch (e) {
+    // if file missing, try writing an empty file (non-destructive test)
+    try {
+      if (!fs.existsSync(TRUSTED_USERS_FILE)) {
+        fs.writeFileSync(TRUSTED_USERS_FILE, JSON.stringify(trustedUsers || {}, null, 2));
+        fs.unlinkSync(TRUSTED_USERS_FILE);
+        checks.push({ name: 'Trusted users persistence', ok: true });
+      } else {
+        checks.push({ name: 'Trusted users persistence', ok: false });
+      }
+    } catch (e2) {
+      checks.push({ name: 'Trusted users persistence', ok: false });
+    }
+  }
+
+  // 4) Can send messages in at least one channel
+  let canSend = false;
+  try {
+    for (const guild of client.guilds.cache.values()) {
+      const sys = guild.systemChannel;
+      if (sys && sys.isTextBased && sys.permissionsFor(guild.members.me)?.has(PermissionsBitField.Flags.SendMessages)) {
+        canSend = true;
+        break;
+      }
+
+      const found = guild.channels.cache.find(c => c.isTextBased && c.permissionsFor(guild.members.me)?.has(PermissionsBitField.Flags.SendMessages));
+      if (found) {
+        canSend = true;
+        break;
+      }
+    }
+  } catch (e) {
+    canSend = false;
+  }
+  checks.push({ name: 'Outbound messaging', ok: canSend });
+
+  // 5) Manage Roles permission in at least one guild
+  let manageRoles = false;
+  try {
+    for (const guild of client.guilds.cache.values()) {
+      if (guild.members.me && guild.members.me.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
+        manageRoles = true;
+        break;
+      }
+    }
+  } catch (e) {
+    manageRoles = false;
+  }
+  checks.push({ name: 'Manage roles', ok: manageRoles });
+
+  // 6) Manage Messages permission in at least one guild
+  let manageMessages = false;
+  try {
+    for (const guild of client.guilds.cache.values()) {
+      if (guild.members.me && guild.members.me.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
+        manageMessages = true;
+        break;
+      }
+    }
+  } catch (e) {
+    manageMessages = false;
+  }
+  checks.push({ name: 'Manage messages', ok: manageMessages });
+
+  // 7) Trusted authority runtime
+  checks.push({ name: 'Trusted authority (runtime)', ok: typeof trustedUsers === 'object' });
+
+  // 8) Startup announcement configuration / ability
+  const startupConfigured = Boolean(process.env.STARTUP_ANNOUNCE_CHANNEL_ID || process.env.STARTUP_ANNOUNCE_GUILD_ID || canSend);
+  checks.push({ name: 'Startup announcement', ok: startupConfigured });
+
+  // Build reply
+  const lines = checks.map(c => `- **${c.name}**: ${c.ok ? 'Nominal.' : 'Fail.'}`);
+  const header = 'Selene Moderation Framework - Integrity Validation:\n';
+  const body = lines.join('\n');
+
+  return message.reply(`${header}${body}`);
 }
 
 client.login(TOKEN);
