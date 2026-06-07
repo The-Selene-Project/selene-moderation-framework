@@ -91,38 +91,38 @@ STARTUP_ANNOUNCE_GUILD_ID=987654321098765432
 If neither is set, the bot will attempt to send the announcement to each guild's system channel or the first text channel where it has send permissions.
 
 ## Commands
-The bot uses `!` as the prefix.
-- `!help-sel` — Show available moderation commands.
-- `!kick @user [reason]` — Kick a member.
-- `!ban @user [reason]` — Ban a member.
-- `!mute @user` — Assign a `Muted` role and block messaging/speaking.
-- `!unmute @user` — Remove the `Muted` role.
-- `!lockdown` — Lock down the current channel so members cannot send messages.
-- `!unlock` — Restore send permissions for the current channel.
-- `!purge <count>` — Delete recent messages from the channel.
-- `!warn @user [reason]` — Record a warning for a member.
-- `!restart` — Restart the bot process.
-- `!halt` — Shut down the bot process.
-- `!elevate_framework_authority` — Grant framework authority to a user so they may execute admin-level commands. Administrator only.
-- `!debase_framework_authority` — Revoke previously granted framework authority from a user. Administrator only.
-- `!validate_framework_integrity` — Run an integrity check of core subcomponents and features.
-- `!enable_verbose_dialogs` — Enable verbose error dialogs.
-- `!disable_verbose_dialogs` — Disable verbose error dialogs.
+The bot uses `$` as the prefix (After Version 1.0.0 Release Candidate 2)
+- `$help-sel` — Show available moderation commands.
+- `$kick @user [reason]` — Kick a member.
+- `$ban @user [reason]` — Ban a member.
+- `$mute @user` — Assign a `Muted` role and block messaging/speaking.
+- `$unmute @user` — Remove the `Muted` role.
+- `$lockdown` — Lock down the current channel so members cannot send messages.
+- `$unlock` — Restore send permissions for the current channel.
+- `$purge <count>` — Delete recent messages from the channel.
+- `$warn @user [reason]` — Record a warning for a member.
+- `$restart` — Restart the bot process.
+- `$halt` — Shut down the bot process.
+- `$elevate_framework_authority` — Grant framework authority to a user so they may execute admin-level commands. Administrator only.
+- `$debase_framework_authority` — Revoke previously granted framework authority from a user. Administrator only.
+- `$validate_framework_integrity` — Run an integrity check of core subcomponents and features.
+- `$enable_verbose_dialogs` — Enable verbose error dialogs.
+- `$disable_verbose_dialogs` — Disable verbose error dialogs.
 
 ## Command Aliases
-The bot uses `!` as the prefix for command aliases too. The syntax for commands executed under aliases remains the same as for the base commands.
-- `!garant` — Show available moderation commands. (Alias counterpart of `!help-sel`)
-- `!phantom` — Kick a member. (Alias counterpart of `!kick`)
-- `!violet` — Ban a member. (Alias counterpart of `!ban`)
-- `!iris` — Assign a `Muted` role and block messaging/speaking. (Alias counterpart of `!mute`)
-- `!iris_revert` — Remove the `Muted` role. (Alias counterpart of `!unmute`)
-- `!twilight` — Lock down the current channel so members cannot send messages. (Alias counterpart of `!lockdown`)
-- `!daybreak` — Restore send permissions for the current channel. (Alias counterpart of `!unlock`)
-- `!hydroxide` — Delete the most recent messages from the channel. (Alias counterpart of `!purge`)
-- `!seraph` — Record a warning for a member. (Alias counterpart of `!warn`)
-- `!reboot` — Restart the bot process. (Alias counterpart of `!restart`)
-- `!cease` — Shut down the bot process. (Alias counterpart of `!halt`)
-- `!viper` — Run and integrity check of core subcomponents and features. (Alias counterpart of `!validate_framework_integrity`)
+The bot uses `$` as the prefix for command aliases too. The syntax for commands executed under aliases remains the same as for the base commands.
+- `$garant` — Show available moderation commands. (Alias counterpart of `$help-sel`)
+- `$phantom` — Kick a member. (Alias counterpart of `$kick`)
+- `$violet` — Ban a member. (Alias counterpart of `$ban`)
+- `$iris` — Assign a `Muted` role and block messaging/speaking. (Alias counterpart of `$mute`)
+- `$iris_revert` — Remove the `Muted` role. (Alias counterpart of `$unmute`)
+- `$twilight` — Lock down the current channel so members cannot send messages. (Alias counterpart of `$lockdown`)
+- `$daybreak` — Restore send permissions for the current channel. (Alias counterpart of `$unlock`)
+- `$hydroxide` — Delete the most recent messages from the channel. (Alias counterpart of `$purge`)
+- `$seraph` — Record a warning for a member. (Alias counterpart of `$warn`)
+- `$reboot` — Restart the bot process. (Alias counterpart of `$restart`)
+- `$cease` — Shut down the bot process. (Alias counterpart of `$halt`)
+- `$viper` — Run and integrity check of core subcomponents and features. (Alias counterpart of `$validate_framework_integrity`)
 
 **NOTICE:** The Command Aliases feature is known for the bug `selene_moderation_framework_bug_002`. The team is working hard to find a permanent resolution to the issue. This issue seems to have been resolved in Version 1.0.0 Release Candidate 1, `Build codename "Hydroxide" (Build number: SEL-MF100IRX/RC1)`.
 
