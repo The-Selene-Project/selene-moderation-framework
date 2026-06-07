@@ -5,7 +5,7 @@ const { Client, GatewayIntentBits, Partials, PermissionsBitField, ActivityType, 
 require('dotenv').config();
 
 const TOKEN = process.env.DISCORD_TOKEN;
-const PREFIX = '!';
+const PREFIX = process.env.COMMAND_PREFIX || '$';
 const WARNING_FILE = path.join(__dirname, 'warnings.json');
 const TRUSTED_USERS_FILE = path.join(__dirname, 'trusted_framework_users.json');
 
@@ -329,12 +329,12 @@ async function ensureMutedRole(guild) {
 
 async function handleKick(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.KickMembers)) {
-    return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_KICK, 'You need Kick Members permission to execute this command action. To bypass, ask an administrator to grant you elevated framework authority, which allows execution of admin-level commands within this bot without needing the corresponding Discord permissions. Elevated framework authority can be granted using the command `!elevate_framework_authority`.'));
+    return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_KICK, `You need Kick Members permission to execute this command action. To bypass, ask an administrator to grant you elevated framework authority, which allows execution of admin-level commands within this bot without needing the corresponding Discord permissions. Elevated framework authority can be granted using the command \`${PREFIX}elevate_framework_authority\`.`));
   }
 
   const target = getTargetMember(message, args[0]);
   if (!target) return replyOnce(message, formatErrorMessage(ERROR_CODES.MISSING_TARGET_KICK, 'Please mention a user to kick.'));
-  if (!target.kickable) return replyOnce(message, formatErrorMessage(ERROR_CODES.UNABLE_TO_KICK, 'An error has occurred while executing the command action: Role hierarchy or permissions rendering moderation action "!kick" impossible.'));
+  if (!target.kickable) return replyOnce(message, formatErrorMessage(ERROR_CODES.UNABLE_TO_KICK, `An error has occurred while executing the command action: Role hierarchy or permissions rendering moderation action "${PREFIX}kick" impossible.`));
 
   const reason = args.slice(1).join(' ') || 'No reason provided';
   await target.kick(reason);
@@ -343,12 +343,12 @@ async function handleKick(message, args) {
 
 async function handleBan(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.BanMembers)) {
-    return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_BAN, 'You need Ban Members permission to execute this command action. To bypass, ask an administrator to grant you elevated framework authority, which allows execution of admin-level commands within this bot without needing the corresponding Discord permissions. Elevated framework authority can be granted using the command `!elevate_framework_authority`.'));
+    return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_BAN, `You need Ban Members permission to execute this command action. To bypass, ask an administrator to grant you elevated framework authority, which allows execution of admin-level commands within this bot without needing the corresponding Discord permissions. Elevated framework authority can be granted using the command \`${PREFIX}elevate_framework_authority\`.`));
   }
 
   const target = getTargetMember(message, args[0]);
   if (!target) return replyOnce(message, formatErrorMessage(ERROR_CODES.MISSING_TARGET_BAN, 'Please mention a user to ban.'));
-  if (!target.bannable) return replyOnce(message, formatErrorMessage(ERROR_CODES.UNABLE_TO_BAN, 'An error has occurred while executing the command action: Role hierarchy or permissions rendering moderation action "!ban" impossible.'));
+  if (!target.bannable) return replyOnce(message, formatErrorMessage(ERROR_CODES.UNABLE_TO_BAN, `An error has occurred while executing the command action: Role hierarchy or permissions rendering moderation action "${PREFIX}ban" impossible.`));
 
   const reason = args.slice(1).join(' ') || 'No reason provided';
   await target.ban({ reason });
