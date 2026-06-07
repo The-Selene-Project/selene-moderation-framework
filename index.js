@@ -10,7 +10,7 @@ const WARNING_FILE = path.join(__dirname, 'warnings.json');
 const TRUSTED_USERS_FILE = path.join(__dirname, 'trusted_framework_users.json');
 
 const COMMAND_ALIASES = {
-  garant: 'help',
+  garant: 'help-sel',
   phantom: 'kick',
   violet: 'ban',
   iris: 'mute',
@@ -221,7 +221,7 @@ client.on('messageCreate', async (message) => {
 
   try {
     switch (command) {
-      case 'help':
+      case 'help-sel':
         return replyOnce(message, getHelpText());
       case 'kick':
         return await handleKick(message, args);
@@ -254,7 +254,7 @@ client.on('messageCreate', async (message) => {
       case 'disable_verbose_dialogs':
         return await handleVerboseDialogs(message, false);
       default:
-        return replyOnce(message, formatErrorMessage(ERROR_CODES.UNKNOWN_COMMAND, `Unknown command action. Use \`${PREFIX}help\` for a list of moderation command actions.`));
+        return replyOnce(message, formatErrorMessage(ERROR_CODES.UNKNOWN_COMMAND, `Unknown command action. Use \`${PREFIX}help-sel\` for a list of moderation command actions.`));
     }
   } catch (error) {
     console.error(`An error occurred while processing command '${command}': ${error.message}`);
@@ -264,7 +264,7 @@ client.on('messageCreate', async (message) => {
 
 function getHelpText() {
   return `Selene Moderation Framework - Commands:\n` +
-    `\`${PREFIX}help\` (alias: \`${PREFIX}garant\`) — Show this help message.\n` +
+    `\`${PREFIX}help-sel\` (alias: \`${PREFIX}garant\`) — Show this help message.\n` +
     `\`${PREFIX}kick @user [reason]\` (alias: \`${PREFIX}phantom\`) — Kick a user from the server.\n` +
     `\`${PREFIX}ban @user [reason]\` (alias: \`${PREFIX}violet\`) — Ban a user from the server.\n` +
     `\`${PREFIX}mute @user\` (alias: \`${PREFIX}iris\`) — Mute a user by assigning a Muted role.\n` +
