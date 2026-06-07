@@ -92,7 +92,7 @@ If neither is set, the bot will attempt to send the announcement to each guild's
 
 ## Commands
 The bot uses `!` as the prefix.
-- `!help` — Show available moderation commands.
+- `!help-sel` — Show available moderation commands.
 - `!kick @user [reason]` — Kick a member.
 - `!ban @user [reason]` — Ban a member.
 - `!mute @user` — Assign a `Muted` role and block messaging/speaking.
@@ -111,7 +111,7 @@ The bot uses `!` as the prefix.
 
 ## Command Aliases
 The bot uses `!` as the prefix for command aliases too. The syntax for commands executed under aliases remains the same as for the base commands.
-- `!garant` — Show available moderation commands. (Alias counterpart of `!help`)
+- `!garant` — Show available moderation commands. (Alias counterpart of `!help-sel`)
 - `!phantom` — Kick a member. (Alias counterpart of `!kick`)
 - `!violet` — Ban a member. (Alias counterpart of `!ban`)
 - `!iris` — Assign a `Muted` role and block messaging/speaking. (Alias counterpart of `!mute`)
