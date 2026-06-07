@@ -264,6 +264,7 @@ client.on('messageCreate', async (message) => {
 
 function getHelpText() {
   return `Selene Moderation Framework - Commands:\n` +
+    `Alternate Prefix Handling System enabled (selmf_core_feature_aphs = enabled_perm)\n` +
     `\`${PREFIX}help-sel\` (alias: \`${PREFIX}garant\`) — Show this help message.\n` +
     `\`${PREFIX}kick @user [reason]\` (alias: \`${PREFIX}phantom\`) — Kick a user from the server.\n` +
     `\`${PREFIX}ban @user [reason]\` (alias: \`${PREFIX}violet\`) — Ban a user from the server.\n` +
