@@ -1,6 +1,19 @@
 version: '3.8'
 
 services:
+  bot:
+    build: .
+    container_name: selene-bot
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_URL: redis://redis:6379
+    networks:
+      - selene-network
+
   redis:
     image: redis:7
     container_name: selene-redis
@@ -12,3 +25,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - selene-network
+
+networks:
+  selene-network:
+    driver: bridge

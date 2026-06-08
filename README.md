@@ -149,21 +149,41 @@ Alias usage also depends on the current active prefix. When Alternate Prefix Han
 
 To prevent duplicate responses when multiple Selene instances are accidentally started, the bot can use Redis as a short-lived lock/dedupe store. You do not need Redis for normal operation — enable it only when you run multiple instances or in clustered environments.
 
-1. Start Redis with Docker Compose (from the repository root):
+### Option 1: Run Bot + Redis together with Docker Compose
 
+This is the recommended approach for keeping the bot online indefinitely with automatic restart on crash.
+
+1. Ensure `.env` is configured with your `DISCORD_TOKEN`:
+```bash
+cp .env.example .env
+# Edit .env and add your bot token
+```
+
+2. Start both bot and Redis services (from the repository root):
 ```bash
 docker compose up -d
 ```
 
-This will start a `redis` service listening on port `6379`.
+This will:
+- Start a Redis service on port `6379` (used internally by the bot)
+- Start the Selene bot with auto-restart enabled
+- Both services restart automatically unless manually stopped
 
-2. Configure the bot to use Redis by setting `REDIS_URL` in your `.env` file:
-
-```ini
-REDIS_URL=redis://127.0.0.1:6379
+3. Check status anytime:
+```bash
+docker compose ps
+docker compose logs bot
+docker compose logs redis
 ```
 
-3. Restart the bot. When connected to Redis the bot will log `Connected to Redis for message dedupe.` and will only allow one instance to process each incoming message.
+4. Stop or restart:
+```bash
+docker compose stop     # graceful stop
+docker compose restart  # restart
+docker compose down     # stop and remove containers
+```
+
+### Option 2: Start Redis with Docker (without Compose)
 
 If you prefer Docker without Compose:
 
@@ -172,6 +192,8 @@ docker run -d --name selene-redis -p 6379:6379 redis:7
 export REDIS_URL=redis://127.0.0.1:6379
 npm start
 ```
+
+Then the bot will connect to the Redis instance for message deduplication.
 
 ## Credits
 **ExtremeHydroxides** - Lead Developer
