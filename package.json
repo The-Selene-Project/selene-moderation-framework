@@ -1,6 +1,6 @@
 {
   "name": "selene-server-moderation-system",
-  "version": "1.0.0-rc.2",
+  "version": "1.0.0-sr",
   "private": true,
   "description": "A Discord moderation bot for The Awesome Team server.",
   "main": "index.js",
