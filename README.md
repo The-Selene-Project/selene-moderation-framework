@@ -113,6 +113,8 @@ Examples below use the active prefix. If Alternate Prefix Handling is disabled, 
 - `$halt` — Shut down the bot process.
 - `$elevate_framework_authority` — Grant framework authority to a user so they may execute admin-level commands. Administrator only.
 - `$debase_framework_authority` — Revoke previously granted framework authority from a user. Administrator only.
+- `$elevate_execution_redline_authority @user` — Grant a user execution redline bypass authority so their commands are not blocked by the simultaneous execution limit. Administrator only.
+- `$debase_execution_redline_authority @user` — Revoke execution redline bypass authority from a user. Administrator only.
 - `$validate_framework_integrity` — Run an integrity check of core subcomponents and features.
 - `$enable_verbose_dialogs` — Enable verbose error dialogs.
 - `$disable_verbose_dialogs` — Disable verbose error dialogs.
@@ -139,6 +141,7 @@ Alias usage also depends on the current active prefix. When Alternate Prefix Han
 - The `Muted` role is created automatically when the bot mutes a member.
 - Warnings are stored in `warnings.json` (ignored from git by `.gitignore`).
 - Trusted framework users (users with the Elevated Framework Authority permission) are stored in `trusted_framework_users.json` (ignored from git by `.gitignore`).
+- Users granted execution redline bypass authority are stored in `execution_redline_bypass_users.json` (ignored from git by `.gitignore`).
 - Initializing multiple instances of SELMF will cause the bug `selene_moderation_framework_bug_002`, internally known as Iris's Aberration of Initialization, in which multiple instances of the framework try to respond to a command simultaneously, resulting in multiple outputs with the same content.
 
 ## Credits
