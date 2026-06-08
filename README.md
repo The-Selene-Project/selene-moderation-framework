@@ -111,6 +111,7 @@ Examples below use the active prefix. If Alternate Prefix Handling is disabled, 
 - `$warn @user [reason]` — Record a warning for a member.
 - `$restart` — Restart the bot process.
 - `$halt` — Shut down the bot process.
+- `$help-sel-devparams` — Show developer parameter and feature flag documentation.
 - `$elevate_framework_authority` — Grant framework authority to a user so they may execute admin-level commands. Administrator only.
 - `$debase_framework_authority` — Revoke previously granted framework authority from a user. Administrator only.
 - `$elevate_execution_redline_authority @user` — Grant a user execution redline bypass authority so their commands are not blocked by the simultaneous execution limit. Administrator only.

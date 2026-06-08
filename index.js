@@ -74,6 +74,129 @@ function formatErrorMessage(code, text) {
   return `[${code}] ${text}`;
 }
 
+// Error message generator with verbose and short versions
+function getErrorMessage(code, context = {}) {
+  const { shortMsg, verboseMsg } = ERROR_MESSAGES[code] || { shortMsg: 'An error occurred.', verboseMsg: 'An error occurred.' };
+  const msg = typeof shortMsg === 'function' ? shortMsg(context) : shortMsg;
+  const verbose = typeof verboseMsg === 'function' ? verboseMsg(context) : verboseMsg;
+  return formatErrorMessage(code, verboseDialogs ? verbose : msg);
+}
+
+const ERROR_MESSAGES = {
+  [ERROR_CODES.NO_PERMISSION_KICK]: {
+    shortMsg: `You need Kick Members permission to execute this command action.`,
+    verboseMsg: () => `You need Kick Members permission to execute this command action. To bypass, ask an administrator to grant you elevated framework authority, which allows execution of admin-level commands within this bot without needing the corresponding Discord permissions. Elevated framework authority can be granted using the command \`${PREFIX}elevate_framework_authority\`.`
+  },
+  [ERROR_CODES.MISSING_TARGET_KICK]: {
+    shortMsg: 'Please mention a user to kick.',
+    verboseMsg: 'Kick command requires a target user mention. Usage: `$kick @user [reason]`.'
+  },
+  [ERROR_CODES.UNABLE_TO_KICK]: {
+    shortMsg: 'Unable to kick user due to role hierarchy or permissions.',
+    verboseMsg: () => `An error has occurred while executing the command action: Role hierarchy or permissions rendering moderation action "${PREFIX}kick" impossible.`
+  },
+  [ERROR_CODES.NO_PERMISSION_BAN]: {
+    shortMsg: `You need Ban Members permission to execute this command action.`,
+    verboseMsg: () => `You need Ban Members permission to execute this command action. To bypass, ask an administrator to grant you elevated framework authority, which allows execution of admin-level commands within this bot without needing the corresponding Discord permissions. Elevated framework authority can be granted using the command \`${PREFIX}elevate_framework_authority\`.`
+  },
+  [ERROR_CODES.MISSING_TARGET_BAN]: {
+    shortMsg: 'Please mention a user to ban.',
+    verboseMsg: 'Ban command requires a target user mention. Usage: `$ban @user [reason]`.'
+  },
+  [ERROR_CODES.UNABLE_TO_BAN]: {
+    shortMsg: 'Unable to ban user due to role hierarchy or permissions.',
+    verboseMsg: () => `An error has occurred while executing the command action: Role hierarchy or permissions rendering moderation action "${PREFIX}ban" impossible.`
+  },
+  [ERROR_CODES.NO_PERMISSION_MUTE]: {
+    shortMsg: 'You need Manage Roles permission to execute this command action.',
+    verboseMsg: 'Mute requires Manage Roles permission to assign the Muted role. Current permissions insufficient.'
+  },
+  [ERROR_CODES.MISSING_TARGET_MUTE]: {
+    shortMsg: 'Please mention a user to mute.',
+    verboseMsg: 'Mute command requires a target user mention. Usage: `$mute @user`.'
+  },
+  [ERROR_CODES.USER_ALREADY_MUTED]: {
+    shortMsg: (ctx) => `${ctx.userTag || 'User'} is already muted.`,
+    verboseMsg: (ctx) => `${ctx.userTag || 'User'} already has the Muted role. Cannot mute a user who is already muted.`
+  },
+  [ERROR_CODES.NO_PERMISSION_UNMUTE]: {
+    shortMsg: 'You need Manage Roles permission to execute this command action.',
+    verboseMsg: 'Unmute requires Manage Roles permission to remove the Muted role. Current permissions insufficient.'
+  },
+  [ERROR_CODES.MISSING_TARGET_UNMUTE]: {
+    shortMsg: 'Please mention a user to unmute.',
+    verboseMsg: 'Unmute command requires a target user mention. Usage: `$unmute @user`.'
+  },
+  [ERROR_CODES.USER_NOT_MUTED]: {
+    shortMsg: (ctx) => `${ctx.userTag || 'User'} is not muted.`,
+    verboseMsg: (ctx) => `${ctx.userTag || 'User'} does not have the Muted role. Cannot unmute a user who is not muted.`
+  },
+  [ERROR_CODES.NO_PERMISSION_PURGE]: {
+    shortMsg: 'You need Manage Messages permission to execute this command action.',
+    verboseMsg: 'Purge requires Manage Messages permission to delete messages. Current permissions insufficient.'
+  },
+  [ERROR_CODES.INVALID_PURGE_AMOUNT]: {
+    shortMsg: 'Message count is not within valid range (1-100).',
+    verboseMsg: 'Message count must be between 1 and 100 (inclusive). Redline Range: 1 to 100.'
+  },
+  [ERROR_CODES.NO_PERMISSION_LOCKDOWN]: {
+    shortMsg: 'You need Manage Channels permission to use this command.',
+    verboseMsg: 'Lockdown requires Manage Channels permission to modify channel permissions. Current permissions insufficient.'
+  },
+  [ERROR_CODES.NO_PERMISSION_UNLOCK]: {
+    shortMsg: 'You need Manage Channels permission to use this command.',
+    verboseMsg: 'Unlock requires Manage Channels permission to modify channel permissions. Current permissions insufficient.'
+  },
+  [ERROR_CODES.NO_PERMISSION_WARN]: {
+    shortMsg: 'You need Manage Messages permission to execute this command action.',
+    verboseMsg: 'Warn requires Manage Messages permission to record user warnings. Current permissions insufficient.'
+  },
+  [ERROR_CODES.MISSING_TARGET_WARN]: {
+    shortMsg: 'Please mention a user.',
+    verboseMsg: 'Command requires a target user mention.'
+  },
+  [ERROR_CODES.COMMANDS_SIMULTANEOUS_EXCEEDED]: {
+    shortMsg: 'Command execution capacity exceeded. Try again later.',
+    verboseMsg: () => `Simultaneous command execution redline exceeded. Active: ${activeCommandExecutions}. Redline: ${simultaneousCommandExecutionRedline}.`
+  },
+  [ERROR_CODES.NO_PERMISSION_PREFIX_HANDLING]: {
+    shortMsg: 'You need Administrator permission or elevated framework authority.',
+    verboseMsg: 'You need Administrator permission or elevated framework authority to change bot configuration.'
+  },
+  [ERROR_CODES.NO_PERMISSION_VERBOSE_DIALOGS]: {
+    shortMsg: 'You need Administrator permission or elevated framework authority.',
+    verboseMsg: 'You need Administrator permission or elevated framework authority to change verbose dialog mode.'
+  },
+  [ERROR_CODES.NO_PERMISSION_EXECUTION_REDLINE]: {
+    shortMsg: 'You need Administrator permission.',
+    verboseMsg: 'You need Administrator permission to manage execution redline bypass authority.'
+  },
+  [ERROR_CODES.NO_PERMISSION_RESTART]: {
+    shortMsg: 'You need Administrator permission or elevated framework authority.',
+    verboseMsg: 'You need Administrator permission or elevated framework authority to restart the bot.'
+  },
+  [ERROR_CODES.NO_PERMISSION_HALT]: {
+    shortMsg: 'You need Administrator permission or elevated framework authority.',
+    verboseMsg: 'You need Administrator permission or elevated framework authority to halt the bot.'
+  },
+  [ERROR_CODES.NO_PERMISSION_ELEVATE]: {
+    shortMsg: 'You need Administrator permission.',
+    verboseMsg: 'You need Administrator permission to grant framework authority.'
+  },
+  [ERROR_CODES.NO_PERMISSION_DEBASE]: {
+    shortMsg: 'You need Administrator permission.',
+    verboseMsg: 'You need Administrator permission to revoke framework authority.'
+  },
+  [ERROR_CODES.UNKNOWN_COMMAND]: {
+    shortMsg: () => `Unknown command action. Use \`${PREFIX}help-sel\` for a list of moderation command actions.`,
+    verboseMsg: () => `Unknown command action. Use \`${PREFIX}help-sel\` for a list of moderation command actions.`
+  },
+  [ERROR_CODES.INTERNAL_ERROR]: {
+    shortMsg: 'An internal error occurred while processing your command.',
+    verboseMsg: (ctx) => `Internal error: ${ctx.errorMsg || 'An internal error occurred while processing your command.'}`
+  }
+};
+
 const repliedMessages = new WeakSet();
 function replyOnce(message, content) {
   if (repliedMessages.has(message)) return Promise.resolve(null);
@@ -125,9 +248,7 @@ function canStartCommandExecution(member) {
 }
 
 function getCommandExecutionRedlineMessage() {
-  const shortMsg = 'Command execution capacity exceeded. Try again later.';
-  const verboseMsg = `Simultaneous command execution redline exceeded. Active: ${activeCommandExecutions}. Redline: ${simultaneousCommandExecutionRedline}.`;
-  return formatErrorMessage(ERROR_CODES.COMMANDS_SIMULTANEOUS_EXCEEDED, verboseDialogs ? verboseMsg : shortMsg);
+  return getErrorMessage(ERROR_CODES.COMMANDS_SIMULTANEOUS_EXCEEDED);
 }
 
 function beginCommandExecution() {
@@ -300,7 +421,7 @@ client.on('messageCreate', async (message) => {
   const normalizedFlagMessage = message.content.trim().toLowerCase();
   if (normalizedFlagMessage === ALTERNATE_PREFIX_HANDLING_ENABLE_SEQUENCE || normalizedFlagMessage === ALTERNATE_PREFIX_HANDLING_DISABLE_SEQUENCE) {
     if (!hasAdminAuthority(message.member)) {
-      return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_PREFIX_HANDLING, 'You need Administrator permission or elevated framework authority to change alternate prefix handling state.'));
+      return replyOnce(message, getErrorMessage(ERROR_CODES.NO_PERMISSION_PREFIX_HANDLING));
     }
 
     const enable = normalizedFlagMessage === ALTERNATE_PREFIX_HANDLING_ENABLE_SEQUENCE;
@@ -316,7 +437,7 @@ client.on('messageCreate', async (message) => {
   // Handle simultaneous command execution redline parameter messages
   if (message.content.trim().startsWith(REDLINE_PARAM_PREFIX)) {
     if (!hasAdminAuthority(message.member)) {
-      return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_PREFIX_HANDLING, 'You need Administrator permission or elevated framework authority to change the simultaneous command execution redline.'));
+      return replyOnce(message, getErrorMessage(ERROR_CODES.NO_PERMISSION_PREFIX_HANDLING));
     }
 
     const trailing = message.content.trim().slice(REDLINE_PARAM_PREFIX.length);
@@ -327,7 +448,7 @@ client.on('messageCreate', async (message) => {
 
     const num = Number(trailing);
     if (!Number.isFinite(num) || num < 0) {
-      return replyOnce(message, formatErrorMessage(ERROR_CODES.INTERNAL_ERROR, 'Invalid redline value. Use 0 to disable or a non-negative number.'));
+      return replyOnce(message, getErrorMessage(ERROR_CODES.INTERNAL_ERROR, {errorMsg: 'Invalid redline value. Use 0 to disable or a non-negative number.'}));
     }
 
     simultaneousCommandExecutionRedline = num;
@@ -379,16 +500,18 @@ client.on('messageCreate', async (message) => {
         return await handleVerboseDialogs(message, false);
       case 'debug_simultaneous_command_execution':
         return await handleDebugSimultaneousCommands(message, args);
+      case 'help-sel-devparams':
+        return replyOnce(message, getDevParamsHelpText());
       case 'elevate_execution_redline_authority':
         return await handleElevateExecutionRedlineAuthority(message, args);
       case 'debase_execution_redline_authority':
         return await handleDebaseExecutionRedlineAuthority(message, args);
       default:
-        return replyOnce(message, formatErrorMessage(ERROR_CODES.UNKNOWN_COMMAND, `Unknown command action. Use \`${PREFIX}help-sel\` for a list of moderation command actions.`));
+        return replyOnce(message, getErrorMessage(ERROR_CODES.UNKNOWN_COMMAND));
     }
   } catch (error) {
     console.error(`An error occurred while processing command '${command}': ${error.message}`);
-    return message.reply(formatErrorMessage(ERROR_CODES.INTERNAL_ERROR, 'An internal error occurred while processing your command.', error));
+    return message.reply(getErrorMessage(ERROR_CODES.INTERNAL_ERROR, {errorMsg: error.message}));
   } finally {
     endCommandExecution();
   }
@@ -402,16 +525,11 @@ function getHelpText() {
   return `Selene Moderation Framework - Commands:\n` +
     `${statusLine}\n` +
     `Current command prefix: ${PREFIX}\n` +
-    `Use \`selmf_core_feature_flag_alternate_prefix_handling = enabled\` to enable alternate prefix handling and use the $ prefix.\n` +
-    `Use \`selmf_core_feature_flag_alternate_prefix_handling = disabled\` to disable alternate prefix handling and use the ! prefix.\n` +
-    `Use \`selmf_core_parameter_simultaneous_command_execution_redline = redline_numerical.NaN\` to clear any execution redline (no limit).\n` +
-    `Use \`selmf_core_parameter_simultaneous_command_execution_redline = redline_numerical.0\` to disable enforcement, or replace \`.0\` with any positive number to set a concurrent command redline.\n` +
-    `\`${PREFIX}debug_simultaneous_command_execution <count> [duration_ms]\` — Run multiple internal command execution simulations in parallel to test the redline limit. Administrator only.\n` +
+    `Use \`${PREFIX}help-sel-devparams\` to show developer parameter and feature flag documentation.\n` +
     `\`${PREFIX}help-sel\` (alias: \`${PREFIX}garant\`) — Show this help message.\n` +
     `\`${PREFIX}kick @user [reason]\` (alias: \`${PREFIX}phantom\`) — Kick a user from the server.\n` +
     `\`${PREFIX}ban @user [reason]\` (alias: \`${PREFIX}violet\`) — Ban a user from the server.\n` +
     `\`${PREFIX}mute @user\` (alias: \`${PREFIX}iris\`) — Mute a user by assigning a Muted role.\n` +
-    `\`${PREFIX}unmute @user\` (alias: \`${PREFIX}iris_revert\`) — Remove the Muted role.\n` +
     `\`${PREFIX}lockdown\` (alias: \`${PREFIX}twilight\`) — Lock down the current channel so members can no longer send messages.\n` +
     `\`${PREFIX}unlock\` (alias: \`${PREFIX}daybreak\`) — Restore send permissions for the current channel.\n` +
     `\`${PREFIX}purge <count>\` (alias: \`${PREFIX}hydroxide\`) — Delete the most recent messages.\n` +
@@ -420,9 +538,22 @@ function getHelpText() {
     `\`${PREFIX}halt\` (alias: \`${PREFIX}cease\`) — Shut down the bot process. Use this when you want Selene to stop running. Used by developers for maintenance and updating purposes.\n` +
     `\`${PREFIX}elevate_framework_authority\` — Grant framework authority to a user so they may execute admin-only commands. Administrator only.\n` +
     `\`${PREFIX}debase_framework_authority\` — Revoke previously granted framework authority from a user. Administrator only.\n` +
+    `\`${PREFIX}elevate_execution_redline_authority @user\` — Grant execution redline bypass authority to a user. Administrator only.\n` +
+    `\`${PREFIX}debase_execution_redline_authority @user\` — Revoke execution redline bypass authority from a user. Administrator only.\n` +
+    `\`${PREFIX}debug_simultaneous_command_execution <count> [duration_ms]\` — Run multiple internal command execution simulations in parallel to test the redline limit. Administrator only.\n` +
     `\`${PREFIX}validate_framework_integrity\` (alias: \`${PREFIX}viper\`) — Run an integrity check of core subcomponents and features.\n` +
     `\`${PREFIX}enable_verbose_dialogs\` — Enable verbose error dialogs. Use only for debugging purposes.\n` +
     `\`${PREFIX}disable_verbose_dialogs\` — Disable verbose error dialogs. Recommended for normal operation.`;
+}
+
+function getDevParamsHelpText() {
+  return `Selene Developer Parameters:\n` +
+    `Developer parameter messages are sent directly without the standard command prefix.\n` +
+    `\`selmf_core_feature_flag_alternate_prefix_handling = enabled\` — Enable Alternate Prefix Handling and switch commands to the $ prefix.\n` +
+    `\`selmf_core_feature_flag_alternate_prefix_handling = disabled\` — Disable Alternate Prefix Handling and switch commands to the ! prefix.\n` +
+    `\`selmf_core_parameter_simultaneous_command_execution_redline = redline_numerical.NaN\` — Clear any execution redline and remove enforced concurrent command limits.\n` +
+    `\`selmf_core_parameter_simultaneous_command_execution_redline = redline_numerical.0\` — Disable redline enforcement while keeping the parameter configured.\n` +
+    `\`selmf_core_parameter_simultaneous_command_execution_redline = redline_numerical.<number>\` — Set a numeric simultaneous command execution limit. Replace <number> with the desired threshold.`;
 }
 
 function getTargetMember(message, mentionOrId) {
@@ -472,12 +603,12 @@ async function ensureMutedRole(guild) {
 
 async function handleKick(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.KickMembers)) {
-    return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_KICK, `You need Kick Members permission to execute this command action. To bypass, ask an administrator to grant you elevated framework authority, which allows execution of admin-level commands within this bot without needing the corresponding Discord permissions. Elevated framework authority can be granted using the command \`${PREFIX}elevate_framework_authority\`.`));
+    return replyOnce(message, getErrorMessage(ERROR_CODES.NO_PERMISSION_KICK));
   }
 
   const target = getTargetMember(message, args[0]);
-  if (!target) return replyOnce(message, formatErrorMessage(ERROR_CODES.MISSING_TARGET_KICK, 'Please mention a user to kick.'));
-  if (!target.kickable) return replyOnce(message, formatErrorMessage(ERROR_CODES.UNABLE_TO_KICK, `An error has occurred while executing the command action: Role hierarchy or permissions rendering moderation action "${PREFIX}kick" impossible.`));
+  if (!target) return replyOnce(message, getErrorMessage(ERROR_CODES.MISSING_TARGET_KICK));
+  if (!target.kickable) return replyOnce(message, getErrorMessage(ERROR_CODES.UNABLE_TO_KICK));
 
   const reason = args.slice(1).join(' ') || 'No reason provided';
   await target.kick(reason);
@@ -486,12 +617,12 @@ async function handleKick(message, args) {
 
 async function handleBan(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.BanMembers)) {
-    return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_BAN, `You need Ban Members permission to execute this command action. To bypass, ask an administrator to grant you elevated framework authority, which allows execution of admin-level commands within this bot without needing the corresponding Discord permissions. Elevated framework authority can be granted using the command \`${PREFIX}elevate_framework_authority\`.`));
+    return replyOnce(message, getErrorMessage(ERROR_CODES.NO_PERMISSION_BAN));
   }
 
   const target = getTargetMember(message, args[0]);
-  if (!target) return replyOnce(message, formatErrorMessage(ERROR_CODES.MISSING_TARGET_BAN, 'Please mention a user to ban.'));
-  if (!target.bannable) return replyOnce(message, formatErrorMessage(ERROR_CODES.UNABLE_TO_BAN, `An error has occurred while executing the command action: Role hierarchy or permissions rendering moderation action "${PREFIX}ban" impossible.`));
+  if (!target) return replyOnce(message, getErrorMessage(ERROR_CODES.MISSING_TARGET_BAN));
+  if (!target.bannable) return replyOnce(message, getErrorMessage(ERROR_CODES.UNABLE_TO_BAN));
 
   const reason = args.slice(1).join(' ') || 'No reason provided';
   await target.ban({ reason });
@@ -500,15 +631,15 @@ async function handleBan(message, args) {
 
 async function handleMute(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.ManageRoles)) {
-    return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_MUTE, 'You need Manage Roles permission to execute this command action.'));
+    return replyOnce(message, getErrorMessage(ERROR_CODES.NO_PERMISSION_MUTE));
   }
 
   const target = getTargetMember(message, args[0]);
-  if (!target) return replyOnce(message, formatErrorMessage(ERROR_CODES.MISSING_TARGET_MUTE, 'Please mention a user to mute.'));
+  if (!target) return replyOnce(message, getErrorMessage(ERROR_CODES.MISSING_TARGET_MUTE));
 
   const muteRole = await ensureMutedRole(message.guild);
   if (target.roles.cache.has(muteRole.id)) {
-    return replyOnce(message, formatErrorMessage(ERROR_CODES.USER_ALREADY_MUTED, `${target.user.tag} is already muted.`));
+    return replyOnce(message, getErrorMessage(ERROR_CODES.USER_ALREADY_MUTED, {userTag: target.user.tag}));
   }
 
   await target.roles.add(muteRole, 'Muted by Selene Moderation Framework');
@@ -517,15 +648,15 @@ async function handleMute(message, args) {
 
 async function handleUnmute(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.ManageRoles)) {
-    return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_UNMUTE, 'You need Manage Roles permission to execute this command action.'));
+    return replyOnce(message, getErrorMessage(ERROR_CODES.NO_PERMISSION_UNMUTE));
   }
 
   const target = getTargetMember(message, args[0]);
-  if (!target) return replyOnce(message, formatErrorMessage(ERROR_CODES.MISSING_TARGET_UNMUTE, 'Please mention a user to unmute.'));
+  if (!target) return replyOnce(message, getErrorMessage(ERROR_CODES.MISSING_TARGET_UNMUTE));
 
   const muteRole = await ensureMutedRole(message.guild);
   if (!target.roles.cache.has(muteRole.id)) {
-    return replyOnce(message, formatErrorMessage(ERROR_CODES.USER_NOT_MUTED, `${target.user.tag} is not muted.`));
+    return replyOnce(message, getErrorMessage(ERROR_CODES.USER_NOT_MUTED, {userTag: target.user.tag}));
   }
 
   await target.roles.remove(muteRole, 'Unmuted by Selene Moderation Framework');
@@ -534,12 +665,12 @@ async function handleUnmute(message, args) {
 
 async function handlePurge(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.ManageMessages)) {
-    return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_PURGE, 'You need Manage Messages permission to execute this command action.'));
+    return replyOnce(message, getErrorMessage(ERROR_CODES.NO_PERMISSION_PURGE));
   }
 
   const amount = parseInt(args[0], 10);
   if (Number.isNaN(amount) || amount < 1 || amount > 100) {
-    return replyOnce(message, formatErrorMessage(ERROR_CODES.INVALID_PURGE_AMOUNT, 'An error has occurred while executing the command action: Amount of purged messages is not within the numerical redline range. Redline Range: 1 to 100.'));
+    return replyOnce(message, getErrorMessage(ERROR_CODES.INVALID_PURGE_AMOUNT));
   }
 
   const deleted = await message.channel.bulkDelete(amount + 1, true);
@@ -552,7 +683,7 @@ async function handlePurge(message, args) {
 
 async function handleLockdown(message) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.ManageChannels)) {
-    return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_LOCKDOWN, 'You need Manage Channels permission to use this command.'));
+    return replyOnce(message, getErrorMessage(ERROR_CODES.NO_PERMISSION_LOCKDOWN));
   }
 
   const channel = message.channel;
@@ -575,7 +706,7 @@ async function handleLockdown(message) {
 
 async function handleUnlock(message) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.ManageChannels)) {
-    return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_UNLOCK, 'You need Manage Channels permission to use this command.'));
+    return replyOnce(message, getErrorMessage(ERROR_CODES.NO_PERMISSION_UNLOCK));
   }
 
   const channel = message.channel;
@@ -598,11 +729,11 @@ async function handleUnlock(message) {
 
 async function handleWarn(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.ManageMessages)) {
-    return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_WARN, 'You need Manage Messages permission to execute this command action.'));
+    return replyOnce(message, getErrorMessage(ERROR_CODES.NO_PERMISSION_WARN));
   }
 
   const target = getTargetMember(message, args[0]);
-  if (!target) return replyOnce(message, formatErrorMessage(ERROR_CODES.MISSING_TARGET_WARN, 'Please mention a user to warn.'));
+  if (!target) return replyOnce(message, getErrorMessage(ERROR_CODES.MISSING_TARGET_WARN));
 
   const reason = args.slice(1).join(' ') || 'No reason provided';
   const userId = target.id;
@@ -615,7 +746,7 @@ async function handleWarn(message, args) {
 
 async function handleVerboseDialogs(message, enabled) {
   if (!hasAdminAuthority(message.member)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_VERBOSE_DIALOGS, 'You need Administrator permission or elevated framework authority to change verbose dialog mode.'));
+    return message.reply(getErrorMessage(ERROR_CODES.NO_PERMISSION_VERBOSE_DIALOGS));
   }
 
   verboseDialogs = enabled;
@@ -624,12 +755,12 @@ async function handleVerboseDialogs(message, enabled) {
 
 async function handleElevateExecutionRedlineAuthority(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.Administrator)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_EXECUTION_REDLINE, 'You need Administrator permission to grant execution redline bypass authority.'));
+    return message.reply(getErrorMessage(ERROR_CODES.NO_PERMISSION_EXECUTION_REDLINE));
   }
 
   const target = getTargetMember(message, args[0]);
   if (!target) {
-    return message.reply(formatErrorMessage(ERROR_CODES.MISSING_TARGET_WARN, 'Please mention a user to elevate.'));
+    return message.reply(getErrorMessage(ERROR_CODES.MISSING_TARGET_WARN));
   }
 
   if (target.user.bot) {
@@ -651,12 +782,12 @@ async function handleElevateExecutionRedlineAuthority(message, args) {
 
 async function handleDebaseExecutionRedlineAuthority(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.Administrator)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_EXECUTION_REDLINE, 'You need Administrator permission to revoke execution redline bypass authority.'));
+    return message.reply(getErrorMessage(ERROR_CODES.NO_PERMISSION_EXECUTION_REDLINE));
   }
 
   const target = getTargetMember(message, args[0]);
   if (!target) {
-    return message.reply(formatErrorMessage(ERROR_CODES.MISSING_TARGET_WARN, 'Please mention a user to debase.'));
+    return message.reply(getErrorMessage(ERROR_CODES.MISSING_TARGET_WARN));
   }
 
   if (!hasExecutionRedlineBypass(target)) {
@@ -671,7 +802,7 @@ async function handleDebaseExecutionRedlineAuthority(message, args) {
 
 async function handleDebugSimultaneousCommands(message, args) {
   if (!hasAdminAuthority(message.member)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_PREFIX_HANDLING, 'You need Administrator permission or elevated framework authority to run debug simultaneous command execution tests.'));
+    return message.reply(getErrorMessage(ERROR_CODES.NO_PERMISSION_PREFIX_HANDLING));
   }
 
   const count = parseInt(args[0], 10);
@@ -721,7 +852,7 @@ function restartProcess() {
 
 async function handleRestart(message) {
   if (!hasAdminAuthority(message.member)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_RESTART, 'You need Administrator permission or elevated framework authority to restart the bot.'));
+    return message.reply(getErrorMessage(ERROR_CODES.NO_PERMISSION_RESTART));
   }
 
   await message.reply('Restarting Selene moderation framework...');
@@ -732,7 +863,7 @@ async function handleRestart(message) {
 
 async function handleHalt(message) {
   if (!hasAdminAuthority(message.member)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_HALT, 'You need Administrator permission or elevated framework authority to halt the bot.'));
+    return message.reply(getErrorMessage(ERROR_CODES.NO_PERMISSION_HALT));
   }
 
   await message.reply('Shutting down Selene Moderation Framework...');
@@ -742,12 +873,12 @@ async function handleHalt(message) {
 
 async function handleElevateFrameworkAuthority(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.Administrator)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_ELEVATE, 'You need Administrator permission to grant framework authority.'));
+    return message.reply(getErrorMessage(ERROR_CODES.NO_PERMISSION_ELEVATE));
   }
 
   const target = getTargetMember(message, args[0]);
   if (!target) {
-    return message.reply(formatErrorMessage(ERROR_CODES.MISSING_TARGET_WARN, 'Please mention a user to elevate.'));
+    return message.reply(getErrorMessage(ERROR_CODES.MISSING_TARGET_WARN));
   }
 
   if (target.user.bot) {
@@ -769,12 +900,12 @@ async function handleElevateFrameworkAuthority(message, args) {
 
 async function handleDebaseFrameworkAuthority(message, args) {
   if (!hasPermission(message.member, PermissionsBitField.Flags.Administrator)) {
-    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_DEBASE, 'You need Administrator permission to revoke framework authority.'));
+    return message.reply(getErrorMessage(ERROR_CODES.NO_PERMISSION_DEBASE));
   }
 
   const target = getTargetMember(message, args[0]);
   if (!target) {
-    return message.reply(formatErrorMessage(ERROR_CODES.MISSING_TARGET_WARN, 'Please mention a user to debase.'));
+    return message.reply(getErrorMessage(ERROR_CODES.MISSING_TARGET_WARN));
   }
 
   if (!isElevatedUser(target)) {
