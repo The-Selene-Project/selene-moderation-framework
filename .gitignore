@@ -2,3 +2,4 @@ node_modules/
 .env
 warnings.json
 trusted_framework_users.json
+execution_redline_bypass_users.json
