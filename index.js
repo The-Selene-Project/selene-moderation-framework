@@ -5,7 +5,14 @@ const { Client, GatewayIntentBits, Partials, PermissionsBitField, ActivityType, 
 require('dotenv').config();
 
 const TOKEN = process.env.DISCORD_TOKEN;
-const PREFIX = process.env.COMMAND_PREFIX || '$';
+const ALTERNATE_PREFIX_COMMAND = '$';
+const DEFAULT_PREFIX_COMMAND = '!';
+const ALTERNATE_PREFIX_HANDLING_ENABLE_SEQUENCE = 'selmf_core_feature_flag_alternate_prefix_handling = enabled';
+const ALTERNATE_PREFIX_HANDLING_DISABLE_SEQUENCE = 'selmf_core_feature_flag_alternate_prefix_handling = disabled';
+const APHS_STATUS_CONFIG_ENABLED = 'selmf_core_feature_aphs = enabled_perm';
+const APHS_STATUS_CONFIG_DISABLED = 'selmf_core_feature_aphs = disabled_perm';
+let alternatePrefixHandlingEnabled = true;
+let PREFIX = ALTERNATE_PREFIX_COMMAND;
 const WARNING_FILE = path.join(__dirname, 'warnings.json');
 const TRUSTED_USERS_FILE = path.join(__dirname, 'trusted_framework_users.json');
 
@@ -39,6 +46,7 @@ const ERROR_CODES = {
   NO_PERMISSION_HALT: 'err_selene_mod_no_permission_halt',
   NO_PERMISSION_ELEVATE: 'err_selene_mod_no_permission_elevate',
   NO_PERMISSION_DEBASE: 'err_selene_mod_no_permission_debase',
+  NO_PERMISSION_PREFIX_HANDLING: 'err_selene_mod_no_permission_prefix_handling',
   NO_PERMISSION_VERBOSE_DIALOGS: 'err_selene_mod_no_permission_verbose_dialogs',
   INTERNAL_ERROR: 'err_selene_mod_internal_error',
   MISSING_TARGET_KICK: 'err_selene_mod_missing_target_kick',
@@ -214,6 +222,22 @@ client.on('messageCreate', async (message) => {
     return message.channel.send('The community deserves to enjoy their time without technical issues. - ExtremeHydroxides, Technical Operations Manager');
   }
 
+  const normalizedFlagMessage = message.content.trim().toLowerCase();
+  if (normalizedFlagMessage === ALTERNATE_PREFIX_HANDLING_ENABLE_SEQUENCE || normalizedFlagMessage === ALTERNATE_PREFIX_HANDLING_DISABLE_SEQUENCE) {
+    if (!hasAdminAuthority(message.member)) {
+      return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_PREFIX_HANDLING, 'You need Administrator permission or elevated framework authority to change alternate prefix handling state.'));
+    }
+
+    const enable = normalizedFlagMessage === ALTERNATE_PREFIX_HANDLING_ENABLE_SEQUENCE;
+    if (enable === alternatePrefixHandlingEnabled) {
+      return replyOnce(message, `Alternate Prefix Handling is already ${enable ? 'enabled' : 'disabled'}. Commands are already using the ${PREFIX} prefix.`);
+    }
+
+    alternatePrefixHandlingEnabled = enable;
+    PREFIX = enable ? ALTERNATE_PREFIX_COMMAND : DEFAULT_PREFIX_COMMAND;
+    return replyOnce(message, `Alternate Prefix Handling ${enable ? 'enabled' : 'disabled'}. Commands now use the ${PREFIX} prefix.`);
+  }
+
   if (!message.content.startsWith(PREFIX)) return;
 
   const args = message.content.slice(PREFIX.length).trim().split(/\s+/);
@@ -263,8 +287,15 @@ client.on('messageCreate', async (message) => {
 });
 
 function getHelpText() {
+  const statusLine = alternatePrefixHandlingEnabled
+    ? `Alternate Prefix Handling enabled (${APH_STATUS_CONFIG_ENABLED})`
+    : `Alternate Prefix Handling disabled (${APH_STATUS_CONFIG_DISABLED})`;
+
   return `Selene Moderation Framework - Commands:\n` +
-    `Alternate Prefix Handling System enabled (selmf_core_feature_aphs = enabled_perm)\n` +
+    `${statusLine}\n` +
+    `Current command prefix: ${PREFIX}\n` +
+    `Use \`selmf_core_feature_flag_alternate_prefix_handling = enabled\` to enable alternate prefix handling and use the $ prefix.\n` +
+    `Use \`selmf_core_feature_flag_alternate_prefix_handling = disabled\` to disable alternate prefix handling and use the ! prefix.\n` +
     `\`${PREFIX}help-sel\` (alias: \`${PREFIX}garant\`) — Show this help message.\n` +
     `\`${PREFIX}kick @user [reason]\` (alias: \`${PREFIX}phantom\`) — Kick a user from the server.\n` +
     `\`${PREFIX}ban @user [reason]\` (alias: \`${PREFIX}violet\`) — Ban a user from the server.\n` +

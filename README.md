@@ -91,7 +91,15 @@ STARTUP_ANNOUNCE_GUILD_ID=987654321098765432
 If neither is set, the bot will attempt to send the announcement to each guild's system channel or the first text channel where it has send permissions.
 
 ## Commands
-The bot uses `$` as the prefix (After Version 1.0.0 Release Candidate 2)
+The bot supports dynamic Alternate Prefix Handling. When enabled, commands use `$`. When disabled, commands use `!`.
+
+Use these exact toggle sequences (without a command prefix):
+- `selmf_core_feature_flag_alternate_prefix_handling = enabled` — enable Alternate Prefix Handling and switch commands to `$`
+- `selmf_core_feature_flag_alternate_prefix_handling = disabled` — disable Alternate Prefix Handling and switch commands to `!`
+
+The help text also reports the current prefix and state.
+
+Examples below use the active prefix. If Alternate Prefix Handling is disabled, replace `$` with `!`.
 - `$help-sel` — Show available moderation commands.
 - `$kick @user [reason]` — Kick a member.
 - `$ban @user [reason]` — Ban a member.
@@ -110,7 +118,7 @@ The bot uses `$` as the prefix (After Version 1.0.0 Release Candidate 2)
 - `$disable_verbose_dialogs` — Disable verbose error dialogs.
 
 ## Command Aliases
-The bot uses `$` as the prefix for command aliases too. The syntax for commands executed under aliases remains the same as for the base commands.
+Alias usage also depends on the current active prefix. When Alternate Prefix Handling is enabled, aliases use `$`. When it is disabled, aliases use `!`.
 - `$garant` — Show available moderation commands. (Alias counterpart of `$help-sel`)
 - `$phantom` — Kick a member. (Alias counterpart of `$kick`)
 - `$violet` — Ban a member. (Alias counterpart of `$ban`)
