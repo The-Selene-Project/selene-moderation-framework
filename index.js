@@ -576,7 +576,7 @@ function getHelpText() {
     `\`${PREFIX}purge <count>\` (alias: \`${PREFIX}hydroxide\`) — Delete the most recent messages.\n` +
     `\`${PREFIX}warn @user [reason]\` (alias: \`${PREFIX}seraph\`) — Record a warning for a user.\n` +
     `\`${PREFIX}restart\` (alias: \`${PREFIX}reboot\`) — Restart the bot process. DO NOT USE UNLESS ABSOLUTELY NECESSARY!\n` +
-    `\`${PREFIX}halt\` (alias: \`${PREFIX}cease\`) — Shut down the bot process. Use this when you want Selene to stop running. Used by developers for maintenance and updating purposes.\n` +
+    `\`${PREFIX}halt\` (alias: \`${PREFIX}cease\`) — Shut down the bot process. Do not use, this command is deprecated and will be removed in a future release.\n` +
     `\`${PREFIX}elevate_framework_authority\` — Grant framework authority to a user so they may execute admin-only commands. Administrator only.\n` +
     `\`${PREFIX}debase_framework_authority\` — Revoke previously granted framework authority from a user. Administrator only.\n` +
     `\`${PREFIX}elevate_execution_redline_authority @user\` — Grant execution redline bypass authority to a user. Administrator only.\n` +
