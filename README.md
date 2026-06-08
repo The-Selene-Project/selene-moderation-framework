@@ -145,6 +145,34 @@ Alias usage also depends on the current active prefix. When Alternate Prefix Han
 - Users granted execution redline bypass authority are stored in `execution_redline_bypass_users.json` (ignored from git by `.gitignore`).
 - Initializing multiple instances of SELMF will cause the bug `selene_moderation_framework_bug_002`, internally known as Iris's Aberration of Initialization, in which multiple instances of the framework try to respond to a command simultaneously, resulting in multiple outputs with the same content.
 
+## Running Redis locally (Docker)
+
+To prevent duplicate responses when multiple Selene instances are accidentally started, the bot can use Redis as a short-lived lock/dedupe store. You do not need Redis for normal operation — enable it only when you run multiple instances or in clustered environments.
+
+1. Start Redis with Docker Compose (from the repository root):
+
+```bash
+docker compose up -d
+```
+
+This will start a `redis` service listening on port `6379`.
+
+2. Configure the bot to use Redis by setting `REDIS_URL` in your `.env` file:
+
+```ini
+REDIS_URL=redis://127.0.0.1:6379
+```
+
+3. Restart the bot. When connected to Redis the bot will log `Connected to Redis for message dedupe.` and will only allow one instance to process each incoming message.
+
+If you prefer Docker without Compose:
+
+```bash
+docker run -d --name selene-redis -p 6379:6379 redis:7
+export REDIS_URL=redis://127.0.0.1:6379
+npm start
+```
+
 ## Credits
 **ExtremeHydroxides** - Lead Developer
 
