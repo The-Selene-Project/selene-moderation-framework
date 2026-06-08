@@ -288,8 +288,8 @@ client.on('messageCreate', async (message) => {
 
 function getHelpText() {
   const statusLine = alternatePrefixHandlingEnabled
-    ? `Alternate Prefix Handling enabled (${APH_STATUS_CONFIG_ENABLED})`
-    : `Alternate Prefix Handling disabled (${APH_STATUS_CONFIG_DISABLED})`;
+    ? `Alternate Prefix Handling enabled (${APHS_STATUS_CONFIG_ENABLED})`
+    : `Alternate Prefix Handling disabled (${APHS_STATUS_CONFIG_DISABLED})`;
 
   return `Selene Moderation Framework - Commands:\n` +
     `${statusLine}\n` +
