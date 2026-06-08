@@ -135,15 +135,13 @@ Alias usage also depends on the current active prefix. When Alternate Prefix Han
 - `$cease` — Shut down the bot process. (Alias counterpart of `$halt`)
 - `$viper` — Run and integrity check of core subcomponents and features. (Alias counterpart of `$validate_framework_integrity`)
 
-**NOTICE:** The Command Aliases feature is known for the bug `selene_moderation_framework_bug_002`. The team is working hard to find a permanent resolution to the issue. This issue seems to have been resolved in Version 1.0.0 Release Candidate 1, `Build codename "Hydroxide" (Build number: SEL-MF100IRX/RC1)`.
-
 ## Notes
 - The bot requires the Administrator permission to function properly, after Version 1.0.0 Release Candidate 1.
 - The `Muted` role is created automatically when the bot mutes a member.
 - Warnings are stored in `warnings.json` (ignored from git by `.gitignore`).
 - Trusted framework users (users with the Elevated Framework Authority permission) are stored in `trusted_framework_users.json` (ignored from git by `.gitignore`).
 - Users granted execution redline bypass authority are stored in `execution_redline_bypass_users.json` (ignored from git by `.gitignore`).
-- Initializing multiple instances of SELMF will cause the bug `selene_moderation_framework_bug_002`, internally known as Iris's Aberration of Initialization, in which multiple instances of the framework try to respond to a command simultaneously, resulting in multiple outputs with the same content.
+- Initializing multiple instances of SELMF will cause the bug `selene_moderation_framework_bug_002`, internally known as Iris's Aberration of Initialization, in which multiple instances of the framework try to respond to a command simultaneously, resulting in multiple outputs with the same content. An optional fix has been found. Check the next section for more information.
 
 ## Running Redis locally (Docker)
 
