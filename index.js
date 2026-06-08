@@ -4,6 +4,44 @@ const { spawn } = require('child_process');
 const { Client, GatewayIntentBits, Partials, PermissionsBitField, ActivityType, ChannelType, EmbedBuilder } = require('discord.js');
 require('dotenv').config();
 
+// Optional Redis client for distributed message deduplication to avoid
+// multiple running instances responding to the same incoming message.
+const REDIS_URL = process.env.REDIS_URL || null;
+let redisClient = null;
+if (REDIS_URL) {
+  try {
+    const Redis = require('ioredis');
+    redisClient = new Redis(REDIS_URL);
+    redisClient.on('error', (err) => console.warn(`Redis error: ${err.message}`));
+    redisClient.on('connect', () => console.log('Connected to Redis for message dedupe.'));
+  } catch (err) {
+    console.warn('Failed to initialize Redis client for message dedupe:', err.message);
+    redisClient = null;
+  }
+}
+
+/**
+ * Try to claim a short-lived lock for the given message so only one
+ * bot instance processes it. If Redis is not configured or an error
+ * occurs, we fall back to allowing processing so functionality is
+ * unchanged.
+ * @param {Message} message
+ * @param {number} ttlMs
+ * @returns {Promise<boolean>} true if this instance should process
+ */
+async function shouldProcessMessage(message, ttlMs = 5000) {
+  if (!redisClient) return true;
+  try {
+    const key = `selene:msglock:${message.guild ? message.guild.id : 'global'}:${message.id}`;
+    // SET key PX ttl NX -> returns 'OK' when set, or null otherwise
+    const res = await redisClient.set(key, '1', 'PX', ttlMs, 'NX');
+    return res === 'OK';
+  } catch (err) {
+    console.warn('Redis lock check failed, allowing processing:', err.message);
+    return true;
+  }
+}
+
 const TOKEN = process.env.DISCORD_TOKEN;
 const ALTERNATE_PREFIX_COMMAND = '$';
 const DEFAULT_PREFIX_COMMAND = '!';
@@ -413,6 +451,9 @@ client.once('ready', async () => {
 
 client.on('messageCreate', async (message) => {
   if (message.author.bot || !message.guild) return;
+
+  // Distributed dedupe: ensure only one instance processes this message
+  if (!await shouldProcessMessage(message)) return;
 
   if (message.content === 'TST is cool') {
     return message.channel.send('The community deserves to enjoy their time without technical issues. - ExtremeHydroxides, Technical Operations Manager');
