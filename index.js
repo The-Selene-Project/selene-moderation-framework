@@ -907,7 +907,7 @@ async function handleHalt(message) {
     return message.reply(getErrorMessage(ERROR_CODES.NO_PERMISSION_HALT));
   }
 
-  await message.reply('Shutting down Selene Moderation Framework...');
+  await message.reply('An error has occurred while attempting to shut down: Command is deprecated. Please use an external process manager to stop the bot or restart it if needed. Command reversion and re-initialization running...');
   await client.destroy();
   process.exit(0);
 }
