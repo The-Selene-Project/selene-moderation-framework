@@ -13,8 +13,12 @@ const APHS_STATUS_CONFIG_ENABLED = 'selmf_core_feature_aphs = enabled_perm';
 const APHS_STATUS_CONFIG_DISABLED = 'selmf_core_feature_aphs = disabled_perm';
 let alternatePrefixHandlingEnabled = true;
 let PREFIX = ALTERNATE_PREFIX_COMMAND;
+const REDLINE_PARAM_PREFIX = 'selmf_core_parameter_simultaneous_command_execution_redline = redline_numerical.';
+let simultaneousCommandExecutionRedline = Number.NaN; // NaN => not set (no enforced redline). Use 0 to explicitly disable.
+let activeCommandExecutions = 0;
 const WARNING_FILE = path.join(__dirname, 'warnings.json');
 const TRUSTED_USERS_FILE = path.join(__dirname, 'trusted_framework_users.json');
+const EXECUTION_REDLINE_BYPASS_FILE = path.join(__dirname, 'execution_redline_bypass_users.json');
 
 const COMMAND_ALIASES = {
   garant: 'help-sel',
@@ -61,7 +65,9 @@ const ERROR_CODES = {
   INVALID_PURGE_AMOUNT: 'err_selene_mod_purge_amount_not_within_redlines',
   WARNING_SAVE_FAILURE: 'err_selene_mod_warning_save_failure',
   UNKNOWN_COMMAND: 'err_selene_mod_command_unknown',
-  ROLE_PERMISSION_UPDATE_FAILURE: 'err_selene_mod_role_permission_update_failure'
+  NO_PERMISSION_EXECUTION_REDLINE: 'err_selene_mod_no_permission_execution_redline',
+  ROLE_PERMISSION_UPDATE_FAILURE: 'err_selene_mod_role_permission_update_failure',
+  COMMANDS_SIMULTANEOUS_EXCEEDED: 'err_selene_mod_simultaneous_command_redline_exceeded'
 };
 
 function formatErrorMessage(code, text) {
@@ -72,11 +78,64 @@ const repliedMessages = new WeakSet();
 function replyOnce(message, content) {
   if (repliedMessages.has(message)) return Promise.resolve(null);
   repliedMessages.add(message);
-  return message.reply(content);
+
+  if (typeof content === 'string' && content.length > 2000) {
+    const chunks = [];
+    let remaining = content;
+
+    while (remaining.length > 0) {
+      if (remaining.length <= 2000) {
+        chunks.push(remaining);
+        break;
+      }
+
+      let splitAt = remaining.lastIndexOf('\n', 2000);
+      if (splitAt <= 0 || splitAt > 2000) {
+        splitAt = 2000;
+      }
+
+      chunks.push(remaining.slice(0, splitAt));
+      remaining = remaining.slice(splitAt);
+    }
+
+    return message.reply(chunks.shift()).then(async (firstReply) => {
+      for (const chunk of chunks) {
+        if (chunk.length === 0) continue;
+        await message.channel.send({ content: chunk }).catch(() => {});
+      }
+      return firstReply;
+    }).catch(() => null);
+  }
+
+  return message.reply(content).catch(() => null);
 }
 
 function normalizeCommand(command) {
   return COMMAND_ALIASES[command] || command;
+}
+
+function hasExecutionRedlineBypass(member) {
+  if (!member) return false;
+  return Boolean(executionRedlineBypassUsers[member.id]);
+}
+
+function canStartCommandExecution(member) {
+  if (hasExecutionRedlineBypass(member)) return true;
+  return Number.isNaN(simultaneousCommandExecutionRedline) || simultaneousCommandExecutionRedline === 0 || activeCommandExecutions < simultaneousCommandExecutionRedline;
+}
+
+function getCommandExecutionRedlineMessage() {
+  const shortMsg = 'Command execution capacity exceeded. Try again later.';
+  const verboseMsg = `Simultaneous command execution redline exceeded. Active: ${activeCommandExecutions}. Redline: ${simultaneousCommandExecutionRedline}.`;
+  return formatErrorMessage(ERROR_CODES.COMMANDS_SIMULTANEOUS_EXCEEDED, verboseDialogs ? verboseMsg : shortMsg);
+}
+
+function beginCommandExecution() {
+  activeCommandExecutions++;
+}
+
+function endCommandExecution() {
+  activeCommandExecutions = Math.max(0, activeCommandExecutions - 1);
 }
 
 if (!TOKEN) {
@@ -101,6 +160,14 @@ try {
   console.warn(`err_selene_mod_trusted_users_read: Could not read or parse trusted users file: ${error.message}`);
 }
 
+let executionRedlineBypassUsers = {};
+try {
+  executionRedlineBypassUsers = JSON.parse(fs.readFileSync(EXECUTION_REDLINE_BYPASS_FILE, 'utf8') || '{}');
+} catch (error) {
+  executionRedlineBypassUsers = {};
+  console.warn(`err_selene_mod_redline_bypass_read: Could not read or parse execution redline bypass file: ${error.message}`);
+}
+
 function saveWarnings() {
   try {
     fs.writeFileSync(WARNING_FILE, JSON.stringify(warnings, null, 2));
@@ -114,6 +181,14 @@ function saveTrustedUsers() {
     fs.writeFileSync(TRUSTED_USERS_FILE, JSON.stringify(trustedUsers, null, 2));
   } catch (error) {
     console.warn(`err_selene_mod_trusted_users_save: Could not save trusted users file: ${error.message}`);
+  }
+}
+
+function saveExecutionRedlineBypassUsers() {
+  try {
+    fs.writeFileSync(EXECUTION_REDLINE_BYPASS_FILE, JSON.stringify(executionRedlineBypassUsers, null, 2));
+  } catch (error) {
+    console.warn(`err_selene_mod_redline_bypass_save: Could not save execution redline bypass file: ${error.message}`);
   }
 }
 
@@ -238,11 +313,36 @@ client.on('messageCreate', async (message) => {
     return replyOnce(message, `Alternate Prefix Handling ${enable ? 'enabled' : 'disabled'}. Commands now use the ${PREFIX} prefix.`);
   }
 
+  // Handle simultaneous command execution redline parameter messages
+  if (message.content.trim().startsWith(REDLINE_PARAM_PREFIX)) {
+    if (!hasAdminAuthority(message.member)) {
+      return replyOnce(message, formatErrorMessage(ERROR_CODES.NO_PERMISSION_PREFIX_HANDLING, 'You need Administrator permission or elevated framework authority to change the simultaneous command execution redline.'));
+    }
+
+    const trailing = message.content.trim().slice(REDLINE_PARAM_PREFIX.length);
+    if (/^nan$/i.test(trailing)) {
+      simultaneousCommandExecutionRedline = Number.NaN;
+      return replyOnce(message, 'Simultaneous command execution redline cleared (NaN). No enforced concurrent limit.');
+    }
+
+    const num = Number(trailing);
+    if (!Number.isFinite(num) || num < 0) {
+      return replyOnce(message, formatErrorMessage(ERROR_CODES.INTERNAL_ERROR, 'Invalid redline value. Use 0 to disable or a non-negative number.'));
+    }
+
+    simultaneousCommandExecutionRedline = num;
+    return replyOnce(message, `Simultaneous command execution redline set to ${num}. Use 0 to disable enforcement or NaN to clear.`);
+  }
+
   if (!message.content.startsWith(PREFIX)) return;
 
   const args = message.content.slice(PREFIX.length).trim().split(/\s+/);
   const command = normalizeCommand(args.shift().toLowerCase());
+  if (!canStartCommandExecution(message.member)) {
+    return replyOnce(message, getCommandExecutionRedlineMessage());
+  }
 
+  beginCommandExecution();
   try {
     switch (command) {
       case 'help-sel':
@@ -277,12 +377,20 @@ client.on('messageCreate', async (message) => {
         return await handleVerboseDialogs(message, true);
       case 'disable_verbose_dialogs':
         return await handleVerboseDialogs(message, false);
+      case 'debug_simultaneous_command_execution':
+        return await handleDebugSimultaneousCommands(message, args);
+      case 'elevate_execution_redline_authority':
+        return await handleElevateExecutionRedlineAuthority(message, args);
+      case 'debase_execution_redline_authority':
+        return await handleDebaseExecutionRedlineAuthority(message, args);
       default:
         return replyOnce(message, formatErrorMessage(ERROR_CODES.UNKNOWN_COMMAND, `Unknown command action. Use \`${PREFIX}help-sel\` for a list of moderation command actions.`));
     }
   } catch (error) {
     console.error(`An error occurred while processing command '${command}': ${error.message}`);
     return message.reply(formatErrorMessage(ERROR_CODES.INTERNAL_ERROR, 'An internal error occurred while processing your command.', error));
+  } finally {
+    endCommandExecution();
   }
 });
 
@@ -296,6 +404,9 @@ function getHelpText() {
     `Current command prefix: ${PREFIX}\n` +
     `Use \`selmf_core_feature_flag_alternate_prefix_handling = enabled\` to enable alternate prefix handling and use the $ prefix.\n` +
     `Use \`selmf_core_feature_flag_alternate_prefix_handling = disabled\` to disable alternate prefix handling and use the ! prefix.\n` +
+    `Use \`selmf_core_parameter_simultaneous_command_execution_redline = redline_numerical.NaN\` to clear any execution redline (no limit).\n` +
+    `Use \`selmf_core_parameter_simultaneous_command_execution_redline = redline_numerical.0\` to disable enforcement, or replace \`.0\` with any positive number to set a concurrent command redline.\n` +
+    `\`${PREFIX}debug_simultaneous_command_execution <count> [duration_ms]\` — Run multiple internal command execution simulations in parallel to test the redline limit. Administrator only.\n` +
     `\`${PREFIX}help-sel\` (alias: \`${PREFIX}garant\`) — Show this help message.\n` +
     `\`${PREFIX}kick @user [reason]\` (alias: \`${PREFIX}phantom\`) — Kick a user from the server.\n` +
     `\`${PREFIX}ban @user [reason]\` (alias: \`${PREFIX}violet\`) — Ban a user from the server.\n` +
@@ -509,6 +620,90 @@ async function handleVerboseDialogs(message, enabled) {
 
   verboseDialogs = enabled;
   return message.reply(`Verbose error dialogs ${enabled ? 'enabled' : 'disabled'}.`);
+}
+
+async function handleElevateExecutionRedlineAuthority(message, args) {
+  if (!hasPermission(message.member, PermissionsBitField.Flags.Administrator)) {
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_EXECUTION_REDLINE, 'You need Administrator permission to grant execution redline bypass authority.'));
+  }
+
+  const target = getTargetMember(message, args[0]);
+  if (!target) {
+    return message.reply(formatErrorMessage(ERROR_CODES.MISSING_TARGET_WARN, 'Please mention a user to elevate.'));
+  }
+
+  if (target.user.bot) {
+    return message.reply('Bots cannot be granted execution redline bypass authority.');
+  }
+
+  if (hasExecutionRedlineBypass(target)) {
+    return message.reply(`${target.user.tag} already has execution redline bypass authority.`);
+  }
+
+  executionRedlineBypassUsers[target.id] = {
+    grantedBy: message.author.id,
+    grantedAt: new Date().toISOString()
+  };
+  saveExecutionRedlineBypassUsers();
+
+  return message.reply(`${target.user.tag} has been granted execution redline bypass authority. Their commands will not be blocked by the simultaneous command execution redline.`);
+}
+
+async function handleDebaseExecutionRedlineAuthority(message, args) {
+  if (!hasPermission(message.member, PermissionsBitField.Flags.Administrator)) {
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_EXECUTION_REDLINE, 'You need Administrator permission to revoke execution redline bypass authority.'));
+  }
+
+  const target = getTargetMember(message, args[0]);
+  if (!target) {
+    return message.reply(formatErrorMessage(ERROR_CODES.MISSING_TARGET_WARN, 'Please mention a user to debase.'));
+  }
+
+  if (!hasExecutionRedlineBypass(target)) {
+    return message.reply(`${target.user.tag} does not currently have execution redline bypass authority.`);
+  }
+
+  delete executionRedlineBypassUsers[target.id];
+  saveExecutionRedlineBypassUsers();
+
+  return message.reply(`${target.user.tag} has had execution redline bypass authority revoked.`);
+}
+
+async function handleDebugSimultaneousCommands(message, args) {
+  if (!hasAdminAuthority(message.member)) {
+    return message.reply(formatErrorMessage(ERROR_CODES.NO_PERMISSION_PREFIX_HANDLING, 'You need Administrator permission or elevated framework authority to run debug simultaneous command execution tests.'));
+  }
+
+  const count = parseInt(args[0], 10);
+  const duration = args[1] ? parseInt(args[1], 10) : 5000;
+  if (Number.isNaN(count) || count < 1 || count > 50) {
+    return replyOnce(message, `Usage: ${PREFIX}debug_simultaneous_command_execution <count> [duration_ms]. Count must be between 1 and 50.`);
+  }
+
+  if (Number.isNaN(duration) || duration < 0 || duration > 120000) {
+    return replyOnce(message, `Duration must be between 0 and 120000 milliseconds.`);
+  }
+
+  let started = 0;
+  for (let i = 0; i < count; i += 1) {
+    if (!canStartCommandExecution()) {
+      break;
+    }
+
+    beginCommandExecution();
+    started += 1;
+
+    (async () => {
+      try {
+        await new Promise((resolve) => setTimeout(resolve, duration));
+      } finally {
+        endCommandExecution();
+      }
+    })();
+  }
+
+  const blocked = count - started;
+  return replyOnce(message, `Debug simulation started ${started} internal command execution(s) for ${duration}ms.${blocked ? ` ${blocked} execution(s) were blocked by the redline.` : ''} Active command execution count is now ${activeCommandExecutions}.`);
 }
 
 function restartProcess() {
