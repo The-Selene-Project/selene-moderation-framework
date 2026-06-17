@@ -42,6 +42,21 @@ async function shouldProcessMessage(message, ttlMs = 5000) {
   }
 }
 
+function isContainerMode() {
+  try {
+    if (process.env.CONTAINER_MODE === '1') return true;
+    if (process.env.CONTAINER_MODE === 'true') return true;
+    if (fs.existsSync('/.dockerenv')) return true;
+    if (fs.existsSync('/proc/1/cgroup')) {
+      const cgroup = fs.readFileSync('/proc/1/cgroup', 'utf8');
+      return /\b(docker|kubepods|containerd|podman)\b/.test(cgroup);
+    }
+  } catch (e) {
+    // ignore and assume not in container mode
+  }
+  return false;
+}
+
 const TOKEN = process.env.DISCORD_TOKEN;
 const ALTERNATE_PREFIX_COMMAND = '$';
 const DEFAULT_PREFIX_COMMAND = '!';
@@ -1062,21 +1077,31 @@ async function handleValidateFrameworkIntegrity(message) {
   checks.push({ name: 'Redis connection', ok: redisStatus });
 
   // 9) Docker status check
-  let dockerStatus = false;
-  try {
-    const dockerCheck = spawnSync('docker', ['ps'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-    dockerStatus = dockerCheck.status === 0;
-  } catch (e) {
-    dockerStatus = false;
+  const inContainer = isContainerMode();
+  let dockerCheckStatus = false;
+  let dockerCheckMessage = null;
+  if (inContainer) {
+    dockerCheckMessage = 'Cannot fetch the status; framework is running in Container Mode.';
+  } else {
+    try {
+      const dockerCheck = spawnSync('docker', ['ps'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+      dockerCheckStatus = dockerCheck.status === 0;
+    } catch (e) {
+      dockerCheckStatus = false;
+    }
   }
-  checks.push({ name: 'Docker availability', ok: dockerStatus });
+  checks.push({
+    name: 'Docker availability',
+    ok: dockerCheckStatus,
+    message: dockerCheckMessage
+  });
 
   // 10) Startup announcement configuration / ability
   const startupConfigured = Boolean(process.env.STARTUP_ANNOUNCE_CHANNEL_ID || process.env.STARTUP_ANNOUNCE_GUILD_ID || canSend);
   checks.push({ name: 'Startup announcement', ok: startupConfigured });
 
   // Build reply
-  const lines = checks.map(c => `- **${c.name}**: ${c.ok ? 'Nominal.' : 'Fail.'}`);
+  const lines = checks.map(c => `- **${c.name}**: ${c.message || (c.ok ? 'Nominal.' : 'Fail.')}`);
   const header = 'Selene Moderation Framework - Integrity Validation:\n';
   const body = lines.join('\n');
 
