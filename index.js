@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const { Client, GatewayIntentBits, Partials, PermissionsBitField, ActivityType, ChannelType, EmbedBuilder } = require('discord.js');
 require('dotenv').config();
 
@@ -1049,7 +1049,29 @@ async function handleValidateFrameworkIntegrity(message) {
   // 7) Trusted authority runtime
   checks.push({ name: 'Trusted authority (runtime)', ok: typeof trustedUsers === 'object' });
 
-  // 8) Startup announcement configuration / ability
+  // 8) Redis connection check
+  let redisStatus = false;
+  if (redisClient) {
+    try {
+      await redisClient.ping();
+      redisStatus = true;
+    } catch (e) {
+      redisStatus = false;
+    }
+  }
+  checks.push({ name: 'Redis connection', ok: redisStatus });
+
+  // 9) Docker status check
+  let dockerStatus = false;
+  try {
+    const dockerCheck = spawnSync('docker', ['ps'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    dockerStatus = dockerCheck.status === 0;
+  } catch (e) {
+    dockerStatus = false;
+  }
+  checks.push({ name: 'Docker availability', ok: dockerStatus });
+
+  // 10) Startup announcement configuration / ability
   const startupConfigured = Boolean(process.env.STARTUP_ANNOUNCE_CHANNEL_ID || process.env.STARTUP_ANNOUNCE_GUILD_ID || canSend);
   checks.push({ name: 'Startup announcement', ok: startupConfigured });
 
