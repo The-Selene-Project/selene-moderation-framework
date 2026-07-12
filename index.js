@@ -3,6 +3,10 @@ const path = require('path');
 const { spawn, spawnSync } = require('child_process');
 const { Client, GatewayIntentBits, Partials, PermissionsBitField, ActivityType, ChannelType, EmbedBuilder } = require('discord.js');
 require('dotenv').config();
+const { parseTerminalExecutionArgs } = require('./terminal-command-utils');
+
+const terminalExecutionConfig = parseTerminalExecutionArgs(process.argv.slice(2));
+const isTerminalExecutionMode = Boolean(terminalExecutionConfig.command);
 
 // Optional Redis client for distributed message deduplication to avoid
 // multiple running instances responding to the same incoming message.
@@ -59,6 +63,7 @@ function isContainerMode() {
 
 const TOKEN = process.env.DISCORD_TOKEN;
 const ALTERNATE_PREFIX_COMMAND = '$';
+const TERMINAL_COMMANDS_REQUIRING_DISCORD = new Set(['kick', 'ban', 'mute', 'unmute', 'lockdown', 'unlock', 'purge', 'warn', 'restart', 'halt', 'elevate_framework_authority', 'debase_framework_authority', 'elevate_execution_redline_authority', 'debase_execution_redline_authority']);
 const DEFAULT_PREFIX_COMMAND = '!';
 const ALTERNATE_PREFIX_HANDLING_ENABLE_SEQUENCE = 'selmf_core_feature_flag_alternate_prefix_handling = enabled';
 const ALTERNATE_PREFIX_HANDLING_DISABLE_SEQUENCE = 'selmf_core_feature_flag_alternate_prefix_handling = disabled';
@@ -290,9 +295,148 @@ function normalizeCommand(command) {
   return COMMAND_ALIASES[command] || command;
 }
 
+async function createTerminalMessageContext(config = {}, discordClient = null) {
+  const authorId = config.authorId || 'terminal-author';
+  const authorTag = config.authorTag || 'Terminal User';
+  let guild = null;
+  let member = {
+    id: authorId,
+    user: { id: authorId, tag: authorTag },
+    permissions: {
+      has: (permission) => Boolean(config.allowAdmin && permission)
+    }
+  };
+
+  if (discordClient && config.guildId) {
+    guild = discordClient.guilds.cache.get(config.guildId) || null;
+  }
+
+  if (guild) {
+    try {
+      const fetchedMember = await guild.members.fetch(authorId).catch(() => null);
+      if (fetchedMember) {
+        member = fetchedMember;
+      }
+    } catch (error) {
+      console.warn(`Unable to resolve terminal author member: ${error.message}`);
+    }
+  }
+
+  if (guild && config.targetId) {
+    try {
+      const targetMember = await guild.members.fetch(config.targetId).catch(() => null);
+      if (targetMember) {
+        guild.members.cache.set(targetMember.id, targetMember);
+      }
+    } catch (error) {
+      console.warn(`Unable to resolve terminal target member: ${error.message}`);
+    }
+  }
+
+  return {
+    isTerminal: true,
+    author: member.user || { id: authorId, tag: authorTag },
+    member,
+    guild,
+    channel: {
+      send: async (payload) => {
+        const content = typeof payload === 'string' ? payload : payload?.content || JSON.stringify(payload);
+        console.log(content);
+        return { id: 'terminal-channel' };
+      }
+    },
+    reply: async (content) => {
+      console.log(content);
+      return { id: 'terminal-reply', content };
+    },
+    delete: async () => {}
+  };
+}
+
 function hasExecutionRedlineBypass(member) {
   if (!member) return false;
   return Boolean(executionRedlineBypassUsers[member.id]);
+}
+
+async function executeCommand(command, message, args = []) {
+  const normalizedCommand = normalizeCommand(command);
+  if (!canStartCommandExecution(message?.member)) {
+    return replyOnce(message, getCommandExecutionRedlineMessage());
+  }
+
+  beginCommandExecution();
+  try {
+    switch (normalizedCommand) {
+      case 'help-sel':
+        return replyOnce(message, getHelpText());
+      case 'kick':
+        return await handleKick(message, args);
+      case 'ban':
+        return await handleBan(message, args);
+      case 'mute':
+        return await handleMute(message, args);
+      case 'unmute':
+        return await handleUnmute(message, args);
+      case 'lockdown':
+        return await handleLockdown(message);
+      case 'unlock':
+        return await handleUnlock(message);
+      case 'purge':
+        return await handlePurge(message, args);
+      case 'warn':
+        return await handleWarn(message, args);
+      case 'restart':
+        return await handleRestart(message);
+      case 'halt':
+        return await handleHalt(message);
+      case 'elevate_framework_authority':
+        return await handleElevateFrameworkAuthority(message, args);
+      case 'debase_framework_authority':
+        return await handleDebaseFrameworkAuthority(message, args);
+      case 'validate_framework_integrity':
+        return await handleValidateFrameworkIntegrity(message);
+      case 'enable_verbose_dialogs':
+        return await handleVerboseDialogs(message, true);
+      case 'disable_verbose_dialogs':
+        return await handleVerboseDialogs(message, false);
+      case 'debug_simultaneous_command_execution':
+        return await handleDebugSimultaneousCommands(message, args);
+      case 'help-sel-devparams':
+        return replyOnce(message, getDevParamsHelpText());
+      case 'elevate_execution_redline_authority':
+        return await handleElevateExecutionRedlineAuthority(message, args);
+      case 'debase_execution_redline_authority':
+        return await handleDebaseExecutionRedlineAuthority(message, args);
+      default:
+        return replyOnce(message, getErrorMessage(ERROR_CODES.UNKNOWN_COMMAND));
+    }
+  } catch (error) {
+    console.error(`An error occurred while processing command '${normalizedCommand}': ${error.message}`);
+    return message.reply(getErrorMessage(ERROR_CODES.INTERNAL_ERROR, {errorMsg: error.message}));
+  } finally {
+    endCommandExecution();
+  }
+}
+
+function messageIsTerminalCommandRequiringDiscord(command) {
+  return TERMINAL_COMMANDS_REQUIRING_DISCORD.has(command);
+}
+
+async function executeTerminalCommandRequest() {
+  if (!terminalExecutionConfig.command) {
+    console.log('No terminal command was provided. Use --terminal-command <command>.');
+    return;
+  }
+
+  const terminalMessage = await createTerminalMessageContext(terminalExecutionConfig, client);
+  const command = normalizeCommand(terminalExecutionConfig.command.toLowerCase());
+  const args = Array.isArray(terminalExecutionConfig.args) ? terminalExecutionConfig.args : [];
+
+  if (messageIsTerminalCommandRequiringDiscord(command) && !TOKEN) {
+    return replyOnce(terminalMessage, `Terminal execution of the '${command}' command requires a live Discord connection. Re-run this command with DISCORD_TOKEN configured.`);
+  }
+
+  return executeCommand(command, terminalMessage, args);
 }
 
 function canStartCommandExecution(member) {
@@ -312,7 +456,7 @@ function endCommandExecution() {
   activeCommandExecutions = Math.max(0, activeCommandExecutions - 1);
 }
 
-if (!TOKEN) {
+if (!TOKEN && !isTerminalExecutionMode) {
   console.error(`${ERROR_CODES.MISSING_TOKEN}: Missing DISCORD_TOKEN in .env or environment variables.`);
   process.exit(1);
 }
@@ -387,6 +531,13 @@ const client = new Client({
 
 client.once('ready', async () => {
   console.log(`Selene Moderation Framework ready as ${client.user.tag}`);
+
+  if (isTerminalExecutionMode) {
+    await executeTerminalCommandRequest();
+    await client.destroy();
+    process.exit(0);
+    return;
+  }
 
   const BOT_STATUS_NAME = process.env.BOT_STATUS_NAME || 'Protecting the server';
   const BOT_STATUS_TYPE = ActivityType[process.env.BOT_STATUS_TYPE?.toUpperCase()] || ActivityType.Watching;
@@ -515,62 +666,7 @@ client.on('messageCreate', async (message) => {
 
   const args = message.content.slice(PREFIX.length).trim().split(/\s+/);
   const command = normalizeCommand(args.shift().toLowerCase());
-  if (!canStartCommandExecution(message.member)) {
-    return replyOnce(message, getCommandExecutionRedlineMessage());
-  }
-
-  beginCommandExecution();
-  try {
-    switch (command) {
-      case 'help-sel':
-        return replyOnce(message, getHelpText());
-      case 'kick':
-        return await handleKick(message, args);
-      case 'ban':
-        return await handleBan(message, args);
-          case 'mute':
-        return await handleMute(message, args);
-      case 'unmute':
-        return await handleUnmute(message, args);
-      case 'lockdown':
-        return await handleLockdown(message);
-      case 'unlock':
-        return await handleUnlock(message);
-      case 'purge':
-        return await handlePurge(message, args);
-      case 'warn':
-        return await handleWarn(message, args);
-      case 'restart':
-        return await handleRestart(message);
-      case 'halt':
-        return await handleHalt(message);
-      case 'elevate_framework_authority':
-        return await handleElevateFrameworkAuthority(message, args);
-      case 'debase_framework_authority':
-        return await handleDebaseFrameworkAuthority(message, args);
-      case 'validate_framework_integrity':
-        return await handleValidateFrameworkIntegrity(message);
-      case 'enable_verbose_dialogs':
-        return await handleVerboseDialogs(message, true);
-      case 'disable_verbose_dialogs':
-        return await handleVerboseDialogs(message, false);
-      case 'debug_simultaneous_command_execution':
-        return await handleDebugSimultaneousCommands(message, args);
-      case 'help-sel-devparams':
-        return replyOnce(message, getDevParamsHelpText());
-      case 'elevate_execution_redline_authority':
-        return await handleElevateExecutionRedlineAuthority(message, args);
-      case 'debase_execution_redline_authority':
-        return await handleDebaseExecutionRedlineAuthority(message, args);
-      default:
-        return replyOnce(message, getErrorMessage(ERROR_CODES.UNKNOWN_COMMAND));
-    }
-  } catch (error) {
-    console.error(`An error occurred while processing command '${command}': ${error.message}`);
-    return message.reply(getErrorMessage(ERROR_CODES.INTERNAL_ERROR, {errorMsg: error.message}));
-  } finally {
-    endCommandExecution();
-  }
+  return executeCommand(command, message, args);
 });
 
 function getHelpText() {
@@ -1108,4 +1204,17 @@ async function handleValidateFrameworkIntegrity(message) {
   return message.reply(`${header}${body}`);
 }
 
-client.login(TOKEN);
+if (isTerminalExecutionMode) {
+  if (TOKEN) {
+    client.login(TOKEN);
+  } else {
+    executeTerminalCommandRequest()
+      .then(() => process.exit(0))
+      .catch((error) => {
+        console.error(`Terminal command execution failed: ${error.message}`);
+        process.exit(1);
+      });
+  }
+} else {
+  client.login(TOKEN);
+}
