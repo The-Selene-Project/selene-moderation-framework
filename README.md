@@ -194,7 +194,7 @@ npm start
 Then the bot will connect to the Redis instance for message deduplication.
 
 ## Credits
-**ExtremeHydroxides** - Lead Developer
+**NominalHydroxides** - Lead Developer
 
 **IrisBitzyy** - Lead Debugger and Developer
 
