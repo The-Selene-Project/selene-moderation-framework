@@ -672,9 +672,10 @@ client.on('messageCreate', async (message) => {
     return replyOnce(message, `Simultaneous command execution redline set to ${num}. Use 0 to disable enforcement or NaN to clear.`);
   }
 
-  if (!message.content.startsWith(PREFIX)) {
+  const commandContent = message.content.trim();
+  if (!commandContent.startsWith(PREFIX)) {
     const inactivePrefix = alternatePrefixHandlingEnabled ? DEFAULT_PREFIX_COMMAND : ALTERNATE_PREFIX_COMMAND;
-    if (message.content.startsWith(inactivePrefix)) {
+    if (commandContent.startsWith(inactivePrefix)) {
       const errorCode = alternatePrefixHandlingEnabled
         ? ERROR_CODES.ALTERNATE_PREFIX_HANDLING_ENABLED
         : ERROR_CODES.ALTERNATE_PREFIX_HANDLING_DISABLED;
@@ -683,7 +684,7 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
-  const args = message.content.slice(PREFIX.length).trim().split(/\s+/);
+  const args = commandContent.slice(PREFIX.length).trim().split(/\s+/);
   const command = normalizeCommand(args.shift().toLowerCase());
   return executeCommand(command, message, args);
 });
