@@ -456,9 +456,13 @@ async function executeTerminalCommandRequest() {
     return;
   }
 
-  const terminalMessage = await createTerminalMessageContext(terminalExecutionConfig, client);
   const command = normalizeCommand(terminalExecutionConfig.command.toLowerCase());
   const args = Array.isArray(terminalExecutionConfig.args) ? terminalExecutionConfig.args : [];
+  const terminalContext = {
+    ...terminalExecutionConfig,
+    targetId: terminalExecutionConfig.targetId || args[0] || null
+  };
+  const terminalMessage = await createTerminalMessageContext(terminalContext, client);
 
   if (messageIsTerminalCommandRequiringDiscord(command) && !TOKEN) {
     return replyOnce(terminalMessage, `Terminal execution of the '${command}' command requires a live Discord connection. Re-run this command with DISCORD_TOKEN configured.`);
