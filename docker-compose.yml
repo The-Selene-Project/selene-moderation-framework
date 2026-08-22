@@ -11,6 +11,10 @@ services:
         condition: service_healthy
     environment:
       REDIS_URL: redis://redis:6379
+    volumes:
+      - ./warnings.json:/app/warnings.json
+      - ./trusted_framework_users.json:/app/trusted_framework_users.json
+      - ./execution_redline_bypass_users.json:/app/execution_redline_bypass_users.json
     networks:
       - selene-network
 
