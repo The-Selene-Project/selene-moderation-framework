@@ -268,7 +268,24 @@ const ERROR_MESSAGES = {
 const repliedMessages = new WeakSet();
 function replyOnce(message, content) {
   if (repliedMessages.has(message)) return Promise.resolve(null);
-  repliedMessages.add(message);
+
+  const sendReply = async (replyContent) => {
+    try {
+      const reply = await message.reply(replyContent);
+      repliedMessages.add(message);
+      return reply;
+    } catch (error) {
+      if (!message.channel || typeof message.channel.send !== 'function') return null;
+      try {
+        const reply = await message.channel.send(replyContent);
+        repliedMessages.add(message);
+        return reply;
+      } catch (fallbackError) {
+        console.warn(`Failed to send response: ${fallbackError.message || error.message}`);
+        return null;
+      }
+    }
+  };
 
   if (typeof content === 'string' && content.length > 2000) {
     const chunks = [];
@@ -289,16 +306,17 @@ function replyOnce(message, content) {
       remaining = remaining.slice(splitAt);
     }
 
-    return message.reply(chunks.shift()).then(async (firstReply) => {
+    return sendReply(chunks.shift()).then(async (firstReply) => {
+      if (!firstReply) return null;
       for (const chunk of chunks) {
         if (chunk.length === 0) continue;
         await message.channel.send({ content: chunk }).catch(() => {});
       }
       return firstReply;
-    }).catch(() => null);
+    });
   }
 
-  return message.reply(content).catch(() => null);
+  return sendReply(content);
 }
 
 function normalizeCommand(command) {
