@@ -109,6 +109,8 @@ const ERROR_CODES = {
   NO_PERMISSION_ELEVATE: 'error_selmf_exec_fail:detail_no_permission_elevate',
   NO_PERMISSION_DEBASE: 'error_selmf_exec_fail:detail_no_permission_debase',
   NO_PERMISSION_PREFIX_HANDLING: 'error_selmf_exec_fail:detail_no_permission_prefix_handling',
+  ALTERNATE_PREFIX_HANDLING_ENABLED: 'error_selmf_exec_fail:detail_alternate_prefix_handling_enabled',
+  ALTERNATE_PREFIX_HANDLING_DISABLED: 'error_selmf_exec_fail:detail_alternate_prefix_handling_disabled',
   NO_PERMISSION_VERBOSE_DIALOGS: 'error_selmf_exec_fail:detail_no_permission_verbose_dialogs',
   INTERNAL_ERROR: 'error_selmf_exec_fail:detail_internal_error',
   MISSING_TARGET_KICK: 'error_selmf_exec_fail:detail_missing_target_kick',
@@ -220,6 +222,14 @@ const ERROR_MESSAGES = {
   [ERROR_CODES.NO_PERMISSION_PREFIX_HANDLING]: {
     shortMsg: 'You need Administrator permission or elevated framework authority.',
     verboseMsg: 'You need Administrator permission or elevated framework authority to change bot configuration.'
+  },
+  [ERROR_CODES.ALTERNATE_PREFIX_HANDLING_ENABLED]: {
+    shortMsg: 'Alternate Prefix Handling is enabled. Commands must use the $ prefix.',
+    verboseMsg: 'Alternate Prefix Handling is enabled, so commands must use the $ prefix. The ! prefix is not accepted.'
+  },
+  [ERROR_CODES.ALTERNATE_PREFIX_HANDLING_DISABLED]: {
+    shortMsg: 'Alternate Prefix Handling is disabled. Commands must use the ! prefix.',
+    verboseMsg: 'Alternate Prefix Handling is disabled, so commands must use the ! prefix. The $ prefix is not accepted.'
   },
   [ERROR_CODES.NO_PERMISSION_VERBOSE_DIALOGS]: {
     shortMsg: 'You need Administrator permission or elevated framework authority.',
@@ -662,7 +672,16 @@ client.on('messageCreate', async (message) => {
     return replyOnce(message, `Simultaneous command execution redline set to ${num}. Use 0 to disable enforcement or NaN to clear.`);
   }
 
-  if (!message.content.startsWith(PREFIX)) return;
+  if (!message.content.startsWith(PREFIX)) {
+    const inactivePrefix = alternatePrefixHandlingEnabled ? DEFAULT_PREFIX_COMMAND : ALTERNATE_PREFIX_COMMAND;
+    if (message.content.startsWith(inactivePrefix)) {
+      const errorCode = alternatePrefixHandlingEnabled
+        ? ERROR_CODES.ALTERNATE_PREFIX_HANDLING_ENABLED
+        : ERROR_CODES.ALTERNATE_PREFIX_HANDLING_DISABLED;
+      return replyOnce(message, getErrorMessage(errorCode));
+    }
+    return;
+  }
 
   const args = message.content.slice(PREFIX.length).trim().split(/\s+/);
   const command = normalizeCommand(args.shift().toLowerCase());
